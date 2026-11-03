@@ -120,7 +120,8 @@
     )
       ? mask.animationEasing
       : "ease";
-    return `d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")} both`;
+    const loop = mask.animationRepeat === "loop" ? " infinite" : "";
+    return `d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")}${loop} both`;
   };
 
   // Divi's Background > Mask fields, without colour and blend mode (meaningless for a clip). One value for all
@@ -158,6 +159,11 @@
     max: 100,
     step: 1,
   });
+  const repeatOptions = {
+    once: { label: __("Once") },
+    view: { label: __("Every Time in View") },
+    loop: { label: __("Loop") },
+  };
   const transformOptions = {
     flipHorizontal: {
       icon: "divi/flip-horizontal",
@@ -372,6 +378,25 @@
       },
       isAnimated,
       { defaultAttr: { desktop: { value: { animationEasing: "ease" } } } },
+    ),
+    animationRepeat: field(
+      "animationRepeat",
+      160,
+      __("Animation Repeat"),
+      "",
+      { name: "divi/select", props: { options: repeatOptions } },
+      isAnimated,
+      {
+        defaultAttr: { desktop: { value: { animationRepeat: "once" } } },
+        // "Every time in view" only with the view start. (The props Divi passes in carry no options to filter.)
+        filterComponentProps: (props) => {
+          if (maskOf(props.attrs).animationTrigger === "view") {
+            return { ...props, options: repeatOptions };
+          }
+          const { view, ...options } = repeatOptions;
+          return { ...props, options };
+        },
+      },
     ),
   };
 

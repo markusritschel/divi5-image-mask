@@ -107,3 +107,58 @@ test('with reduced motion the mask is shown without animation', async (t) => {
     assert.equal(await maskSize(wrap), '100% 100%');
   }
 });
+
+/** Repeat count and play state of the wrap's animation (null without one). */
+const playOf = (locator) =>
+  locator.evaluate((el) => {
+    const [a] = el.getAnimations();
+    return a ? { iterations: a.effect.getTiming().iterations, state: a.playState } : null;
+  });
+/** Waits until the i-th image's mask is (or isn't) marked as in view by the page's script. */
+const inView = (page, i, expected) =>
+  page.waitForFunction(([i, expected]) => document.querySelectorAll('.et_pb_image .et_pb_image_wrap')[i].classList.contains('d5im-in-view') === expected, [i, expected], {
+    timeout: 5000,
+  });
+
+test('Loop repeats the zoom endlessly, Once plays it a single time', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  const { page, errors } = await openPage(t, [
+    { style: 'ellipse', ...onLoad, animationRepeat: 'loop' },
+    { style: 'ellipse', ...onLoad },
+    // "Every time in view" needs the view start: with the load start it plays once.
+    { style: 'ellipse', ...onLoad, animationRepeat: 'view' },
+  ]);
+  assert.deepEqual(await playOf(wraps(page).nth(0)), { iterations: Infinity, state: 'running' });
+  assert.equal((await playOf(wraps(page).nth(1))).iterations, 1);
+  assert.equal((await playOf(wraps(page).nth(2))).iterations, 1);
+  assert.deepEqual(errors, []);
+});
+
+test('scrolled out and back, Every Time in View zooms again and Once does not', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  // Two scroll-started images between plain ones, in a 400 px window: each can be scrolled fully out of view.
+  const { page, errors } = await openPage(t, [null, { style: 'ellipse', ...onView }, { style: 'ellipse', ...onView, animationRepeat: 'view' }, null, null, null]);
+  const [once, again, last] = [wraps(page).nth(1), wraps(page).nth(2), wraps(page).nth(5)];
+
+  await once.scrollIntoViewIfNeeded();
+  await inView(page, 1, true);
+  await again.scrollIntoViewIfNeeded();
+  await inView(page, 2, true);
+  await page.waitForTimeout(800); // Deliberate: both zooms (500 ms) finish.
+  assert.equal((await playOf(once)).state, 'finished');
+  assert.equal((await playOf(again)).state, 'finished');
+
+  // Fully out of view: the repeating mask closes again, the other one stays open.
+  await last.scrollIntoViewIfNeeded();
+  await inView(page, 2, false);
+  assert.equal(await maskSize(again), '0px 0px');
+  assert.equal(await maskSize(once), '100% 100%');
+
+  // Back: only the repeating one zooms again.
+  await again.scrollIntoViewIfNeeded();
+  await inView(page, 2, true);
+  assert.equal((await playOf(again)).state, 'running');
+  await once.scrollIntoViewIfNeeded();
+  assert.equal((await playOf(once)).state, 'finished');
+  assert.deepEqual(errors, []);
+});

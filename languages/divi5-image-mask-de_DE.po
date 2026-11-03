@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Image Mask for Divi 5 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/markusritschel/divi5-image-mask/"
 "issues\n"
-"POT-Creation-Date: 2026-11-03T20:24:58+00:00\n"
+"POT-Creation-Date: 2026-11-03T20:46:59+00:00\n"
 "PO-Revision-Date: 2026-11-03 20:30+0100\n"
 "Last-Translator: Markus Ritschel\n"
 "Language-Team: German\n"
@@ -244,3 +244,19 @@ msgstr "Ease-Out"
 #: divi5-image-mask.php:119
 msgid "Linear"
 msgstr "Linear"
+
+#: divi5-image-mask.php:120
+msgid "Animation Repeat"
+msgstr "Wiederholung der Animation"
+
+#: divi5-image-mask.php:121
+msgid "Once"
+msgstr "Einmal"
+
+#: divi5-image-mask.php:122
+msgid "Every Time in View"
+msgstr "Bei jedem Hineinscrollen"
+
+#: divi5-image-mask.php:123
+msgid "Loop"
+msgstr "Endlos"

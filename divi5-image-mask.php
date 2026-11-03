@@ -117,6 +117,10 @@ function d5im_builder_texts(): array {
 		'Ease-In'           => __( 'Ease-In', 'divi5-image-mask' ),
 		'Ease-Out'          => __( 'Ease-Out', 'divi5-image-mask' ),
 		'Linear'            => __( 'Linear', 'divi5-image-mask' ),
+		'Animation Repeat'  => __( 'Animation Repeat', 'divi5-image-mask' ),
+		'Once'              => __( 'Once', 'divi5-image-mask' ),
+		'Every Time in View' => __( 'Every Time in View', 'divi5-image-mask' ),
+		'Loop'              => __( 'Loop', 'divi5-image-mask' ),
 	);
 }
 
@@ -250,7 +254,9 @@ function d5im_animation_css( array $mask ): string {
 	}
 	$time   = fn( $value, $fallback ) => is_string( $value ) && preg_match( '/^\d*\.?\d+(ms|s)?$/', $value ) ? ( is_numeric( $value ) ? $value . 'ms' : $value ) : $fallback;
 	$easing = in_array( $mask['animationEasing'] ?? '', array( 'ease-in-out', 'ease-in', 'ease-out', 'linear' ), true ) ? $mask['animationEasing'] : 'ease';
-	return sprintf( 'd5im-zoom %s %s %s both', $time( $mask['animationDuration'] ?? '', '500ms' ), $easing, $time( $mask['animationDelay'] ?? '', '0ms' ) );
+	// "Loop" repeats endlessly. "Every time in view" is a class for the script (d5im_render_block()), not CSS.
+	$loop = 'loop' === ( $mask['animationRepeat'] ?? 'once' ) ? ' infinite' : '';
+	return sprintf( 'd5im-zoom %s %s %s%s both', $time( $mask['animationDuration'] ?? '', '500ms' ), $easing, $time( $mask['animationDelay'] ?? '', '0ms' ), $loop );
 }
 
 /*
@@ -258,13 +264,17 @@ function d5im_animation_css( array $mask ): string {
  * Each animated .et_pb_image_wrap carries its animation in --d5im-animation and the class d5im-animate-load or
  * d5im-animate-view. "View" waits for the class d5im-in-view, which the script adds once a fifth of the image is
  * in the window; until then the mask is closed, but only with JavaScript (class d5im-js), so without it the image
- * simply shows. Everything only applies without a reduced-motion preference.
+ * simply shows. With d5im-repeat-view ("Every time in view") the script takes the class away again once the image
+ * is completely out of the window, so the mask closes unseen and zooms again on the way back. (isIntersecting
+ * alone is true for any sliver in view, hence the ratio check.) Everything only applies without a reduced-motion
+ * preference.
  */
 const D5IM_ANIMATION_CSS = '@keyframes d5im-zoom{from{mask-size:0 0}}'
 	. '@media (prefers-reduced-motion:no-preference){.d5im-animate-load,.d5im-animate-view.d5im-in-view{animation:var(--d5im-animation)}'
 	. '.d5im-js .d5im-animate-view:not(.d5im-in-view){mask-size:0 0!important}}';
 const D5IM_ANIMATION_JS = 'document.documentElement.classList.add("d5im-js");addEventListener("DOMContentLoaded",function(){'
-	. 'var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("d5im-in-view");o.unobserve(e.target)}})},{threshold:0.2});'
+	. 'var o=new IntersectionObserver(function(es){es.forEach(function(e){var c=e.target.classList,r=c.contains("d5im-repeat-view");'
+	. 'if(e.intersectionRatio>=0.2){c.add("d5im-in-view");if(!r)o.unobserve(e.target)}else if(r&&!e.isIntersecting){c.remove("d5im-in-view")}})},{threshold:[0,0.2]});'
 	. 'document.querySelectorAll(".d5im-animate-view").forEach(function(el){o.observe(el)})});';
 
 /**
@@ -290,7 +300,11 @@ function d5im_render_block( $content, $block ) {
 	$animation = d5im_animation_css( $mask );
 	if ( '' !== $animation ) {
 		$css .= '--d5im-animation:' . $animation . ';';
-		$html->add_class( 'view' === ( $mask['animationTrigger'] ?? 'load' ) ? 'd5im-animate-view' : 'd5im-animate-load' );
+		$on_view = 'view' === ( $mask['animationTrigger'] ?? 'load' );
+		$html->add_class( $on_view ? 'd5im-animate-view' : 'd5im-animate-load' );
+		if ( $on_view && 'view' === ( $mask['animationRepeat'] ?? 'once' ) ) {
+			$html->add_class( 'd5im-repeat-view' );
+		}
 	}
 	$style = trim( (string) $html->get_attribute( 'style' ) );
 	$html->set_attribute( 'style', ( '' === $style ? '' : rtrim( $style, ';' ) . ';' ) . $css );
