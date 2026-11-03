@@ -66,7 +66,8 @@ function d5im_enqueue_visual_builder_assets() {
 			'version' => D5IM_VERSION . '.' . filemtime( $file ),
 			'script'  => array(
 				'src'                => plugins_url( 'assets/image-mask.js', D5IM_FILE ),
-				'deps'               => array( 'divi-module-library', 'divi-vendor-wp-hooks', 'divi-mask-and-pattern-library' ),
+				// Not 'divi-mask-and-pattern-library': Divi loads that bundle itself, after the first render.
+				'deps'               => array( 'divi-module-library', 'divi-vendor-wp-hooks' ),
 				'enqueue_top_window' => false,
 				'enqueue_app_window' => true,
 			),

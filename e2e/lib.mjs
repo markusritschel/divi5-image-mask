@@ -18,6 +18,12 @@ export const php = (name, ...args) => JSON.parse(wp('eval-file', `/e2e-php/${nam
 /** Divi or a child theme of it. */
 export const diviActive = () => wp('eval', 'echo get_template();') === 'Divi';
 
+/**
+ * A page's HTML. Without keep-alive: wp-cli (execFileSync) blocks the event loop longer than Apache keeps an idle
+ * connection, and fetch would otherwise reuse that closed socket for the next page ("other side closed").
+ */
+export const pageHtml = async (url) => (await fetch(url, { headers: { connection: 'close' } })).text();
+
 export const launch = () => chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
 /** Logs a context in as `user` (password = user name, see setup.sh). */
