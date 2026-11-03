@@ -88,15 +88,39 @@
     ];
     let composite = "";
 
-    // Inverting a custom mask: subtract it from a full layer.
+    // Inverting a custom mask: subtract it from a full layer, at the mask's position (see the PHP).
     if (custom && invert) {
       layers.push("linear-gradient(#000 0 0)");
       sizes.push("100% 100%");
-      positions.push("0 0");
+      positions.push(positions[0]);
       composite = "mask-composite:exclude;";
     }
 
     return `mask-image:${layers.join(",")};mask-size:${sizes.join(",")};mask-position:${positions.join(",")};mask-repeat:no-repeat;${composite}`;
+  };
+
+  // The zoom animation needs sizes CSS can interpolate from 0: not the keywords cover and contain.
+  const isZoomable = (mask) =>
+    hasMask(mask) && ["stretch", "custom"].includes(mask.size ?? "stretch");
+  const isAnimated = (mask) => isZoomable(mask) && mask.animation === "zoom";
+  const time = (value, fallback) =>
+    typeof value === "string" && /^\d*\.?\d+(ms|s)?$/.test(value)
+      ? /^[\d.]+$/.test(value)
+        ? `${value}ms`
+        : value
+      : fallback;
+
+  // Same output as d5im_animation_css() in divi5-image-mask.php: see there.
+  const animationCss = (mask) => {
+    if (!isAnimated(mask)) {
+      return "";
+    }
+    const easing = ["ease-in-out", "ease-in", "ease-out", "linear"].includes(
+      mask.animationEasing,
+    )
+      ? mask.animationEasing
+      : "ease";
+    return `d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")} both`;
   };
 
   // Divi's Background > Mask fields, without colour and blend mode (meaningless for a clip). One value for all
@@ -279,6 +303,76 @@
       { name: "divi/range", props: percentRange(-100) },
       isPlaced,
     ),
+    // The zoom animation, with fields like Divi's own animation group (Advanced > Animation).
+    animation: field(
+      "animation",
+      110,
+      __("Animation"),
+      __("Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size."),
+      {
+        name: "divi/select",
+        props: {
+          options: { none: { label: __("None") }, zoom: { label: __("Zoom In") } },
+        },
+      },
+      isZoomable,
+      { defaultAttr: { desktop: { value: { animation: "none" } } } },
+    ),
+    animationTrigger: field(
+      "animationTrigger",
+      120,
+      __("Animation Start"),
+      "",
+      {
+        name: "divi/select",
+        props: {
+          options: {
+            load: { label: __("On Page Load") },
+            view: { label: __("When Scrolled Into View") },
+          },
+        },
+      },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationTrigger: "load" } } } },
+    ),
+    animationDuration: field(
+      "animationDuration",
+      130,
+      __("Animation Duration"),
+      "",
+      { name: "divi/range", props: { defaultUnit: "ms", min: 0, minLimit: 0, max: 2000, step: 50 } },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationDuration: "500ms" } } } },
+    ),
+    animationDelay: field(
+      "animationDelay",
+      140,
+      __("Animation Delay"),
+      "",
+      { name: "divi/range", props: { defaultUnit: "ms", min: 0, minLimit: 0, max: 2000, step: 50 } },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationDelay: "0ms" } } } },
+    ),
+    animationEasing: field(
+      "animationEasing",
+      150,
+      __("Animation Speed Curve"),
+      "",
+      {
+        name: "divi/select",
+        props: {
+          options: {
+            ease: { label: __("Ease") },
+            "ease-in-out": { label: __("Ease-In-Out") },
+            "ease-in": { label: __("Ease-In") },
+            "ease-out": { label: __("Ease-Out") },
+            linear: { label: __("Linear") },
+          },
+        },
+      },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationEasing: "ease" } } } },
+    ),
   };
 
   hooks.addFilter(
@@ -322,6 +416,11 @@
   sheet.id = "d5im-preview";
   document.head.append(sheet);
 
+  // The zoom plays like "On Page Load" (the page's keyframes, see D5IM_ANIMATION_CSS), whatever the start setting,
+  // and again whenever a module's mask settings change.
+  const KEYFRAMES = "@keyframes d5im-zoom{from{mask-size:0 0}}";
+  const lastSettings = new Map(); // Module id => its rules, to see which changed.
+
   let queued = false;
   const syncPreview = () => {
     queued = false;
@@ -329,20 +428,30 @@
     if (!store) {
       return;
     }
-    const rules = [];
+    const rules = [KEYFRAMES];
+    const changed = [];
     let waiting = false;
     document.querySelectorAll(".et_pb_image").forEach((moduleEl) => {
       const id = moduleEl.className.match(/et_pb_image_([0-9a-f-]{36})/)?.[1];
-      const css = id
-        ? maskCss(
-            store.getModuleAttr(id, "image.advanced.mask")?.desktop?.value ??
-              {},
-          )
-        : "";
+      const mask = id
+        ? (store.getModuleAttr(id, "image.advanced.mask")?.desktop?.value ?? {})
+        : {};
+      const css = id ? maskCss(mask) : "";
       waiting ||= css === null;
-      if (css) {
-        rules.push(`.et_pb_image_${id} .et_pb_image_wrap{${css}}`);
+      if (!css) {
+        return;
       }
+      const selector = `.et_pb_image_${id} .et_pb_image_wrap`;
+      let rule = `${selector}{${css}}`;
+      const animation = animationCss(mask);
+      if (animation) {
+        rule += `@media (prefers-reduced-motion:no-preference){${selector}{animation:${animation}}}`;
+        if (lastSettings.get(id) !== rule) {
+          changed.push(moduleEl);
+        }
+      }
+      lastSettings.set(id, rule);
+      rules.push(rule);
     });
     // Divi's mask bundle arrives without a store change or new elements to wake us up.
     if (waiting) {
@@ -353,6 +462,16 @@
     if (sheet.textContent !== text) {
       sheet.textContent = text;
     }
+    // Restart the zoom of modules whose settings changed (a changed duration alone wouldn't restart it).
+    changed.forEach((moduleEl) =>
+      moduleEl
+        .querySelector(".et_pb_image_wrap")
+        ?.getAnimations()
+        .forEach((a) => {
+          a.cancel();
+          a.play();
+        }),
+    );
   };
   const schedule = () => {
     if (!queued) {

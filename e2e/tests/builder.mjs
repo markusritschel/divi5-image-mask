@@ -28,7 +28,11 @@ async function openBuilder(t, postId) {
 
 /** Waits until the preview stylesheet has a rule for `count` modules (Divi's mask bundle loads after the page). */
 const previewRules = (app, count) =>
-  app.waitForFunction((n) => (document.getElementById('d5im-preview')?.textContent ?? '').split('\n').filter(Boolean).length === n, count, { timeout: 30000 });
+  app.waitForFunction(
+    (n) => (document.getElementById('d5im-preview')?.textContent ?? '').split('\n').filter((line) => line.startsWith('.et_pb_image_')).length === n,
+    count,
+    { timeout: 30000 },
+  );
 
 const moduleIdOf = (app) => app.evaluate(() => document.querySelector('.et_pb_image').className.match(/et_pb_image_([0-9a-f-]{36})/)[1]);
 
@@ -104,15 +108,59 @@ test('a custom mask offers only Invert, a shape all four transforms', async (t) 
       { id: moduleId, custom },
     );
 
+  // The aspect ratio belongs to Divi's shapes only. (Divi's field classes are kebab-case.)
+  const aspectRatio = page.locator('.et-vb-field-image-advanced-mask-aspect-ratio');
   assert.deepEqual(await buttons(), ['flipHorizontal', 'flipVertical', 'rotate', 'invert']);
+  assert.equal(await aspectRatio.count(), 1);
   await setCustom(`${BASE}/wp-content/uploads/d5im-circle.svg`);
   await page.waitForTimeout(500); // Deliberate: the sidebar re-renders after the store change.
   assert.deepEqual(await buttons(), ['invert']);
-  // The aspect ratio belongs to Divi's shapes only.
-  assert.equal(await page.locator('.et-vb-field-image-advanced-mask-aspectRatio').count(), 0);
+  assert.equal(await aspectRatio.count(), 0);
   await setCustom('');
   await page.waitForTimeout(500);
   assert.deepEqual(await buttons(), ['flipHorizontal', 'flipVertical', 'rotate', 'invert']);
+  assert.deepEqual(errors, []);
+});
+
+test('the animation fields show for zoomable sizes, and the preview replays the zoom on every change', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  const { id } = php('mask-page', JSON.stringify([{ style: 'ellipse' }]));
+  t.after(() => wp('post', 'delete', id, '--force'));
+  const { page, app, errors } = await openBuilder(t, id);
+  const moduleId = await moduleIdOf(app);
+  await openMaskGroup(page, app, moduleId);
+  // Divi's field classes are the sub name in kebab-case.
+  const field = (subName) => page.locator(`.et-vb-field-image-advanced-mask-${subName.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
+  // The sidebar follows the store a moment later: wait for the field to come or go.
+  const expectField = (subName, present) => field(subName).waitFor({ state: present ? 'attached' : 'detached', timeout: 5000 });
+  const edit = (value) =>
+    app.evaluate(({ id, value }) => window.divi.data.dispatch('divi/edit-post').editModuleAttribute({ id, attrName: 'image.advanced.mask', value: { desktop: { value } } }), { id: moduleId, value });
+  // The preview's animation: name, duration and how far it has run.
+  const previewAnimation = () =>
+    app.evaluate(() => {
+      const [a] = document.querySelector('.et_pb_image_wrap').getAnimations();
+      return a ? { name: a.animationName, duration: a.effect.getTiming().duration, time: a.currentTime } : null;
+    });
+  const previewIs = (predicate) => app.waitForFunction(predicate, null, { timeout: 5000 });
+
+  await expectField('animation', true);
+  await expectField('animationTrigger', false);
+
+  await edit({ style: 'ellipse', animation: 'zoom' });
+  for (const subName of ['animationTrigger', 'animationDuration', 'animationDelay', 'animationEasing']) await expectField(subName, true);
+  await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.animationName === 'd5im-zoom');
+
+  // Let it run past where a replay would be, change the duration: it starts again with the new duration.
+  await page.waitForTimeout(1200); // Deliberate: longer than the replay check below allows.
+  await edit({ style: 'ellipse', animation: 'zoom', animationDuration: '1500ms' });
+  await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.effect.getTiming().duration === 1500);
+  const replayed = await previewAnimation();
+  assert.ok(replayed.time < 1000, `not replayed: at ${replayed.time} ms`);
+
+  // Cover can't be zoomed: no animation fields, no animation.
+  await edit({ style: 'ellipse', animation: 'zoom', size: 'cover' });
+  await expectField('animation', false);
+  await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations().length === 0);
   assert.deepEqual(errors, []);
 });
 
@@ -122,8 +170,8 @@ test('on a German site the mask group is German', async (t) => {
   wp('option', 'update', 'WPLANG', 'de_DE');
   assert.equal(wp('option', 'get', 'WPLANG'), 'de_DE', 'German not installed: run e2e/setup.sh again');
   t.after(() => wp('option', 'update', 'WPLANG', ''));
-  // A shape with a custom size: every field is shown.
-  const { id } = php('mask-page', JSON.stringify([{ style: 'arch', size: 'custom', position: 'top left' }]));
+  // A shape with a custom size and an animation: every field is shown.
+  const { id } = php('mask-page', JSON.stringify([{ style: 'arch', size: 'custom', position: 'top left', animation: 'zoom' }]));
   t.after(() => wp('post', 'delete', id, '--force'));
   const { page, app, errors } = await openBuilder(t, id);
   await openMaskGroup(page, app, await moduleIdOf(app), 'Bildmaske');
@@ -132,7 +180,10 @@ test('on a German site the mask group is German', async (t) => {
   // Divi title-cases labels: compared without case.
   assert.deepEqual(
     labels.map((label) => label.trim().toLowerCase()),
-    ['Maskenform', 'Eigene Maske', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz'].map((label) => label.toLowerCase()),
+    [
+      'Maskenform', 'Eigene Maske', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz',
+      'Animation', 'Start der Animation', 'Animationsdauer', 'Animationsverzögerung', 'Animationskurve',
+    ].map((label) => label.toLowerCase()),
   );
   // Divi lists a select's options only while it is open.
   await page.locator('.et-vb-field-image-advanced-mask-size li.et-vb-selected-item').click();

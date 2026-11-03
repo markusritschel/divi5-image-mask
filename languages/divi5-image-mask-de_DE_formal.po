@@ -3,16 +3,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Image Mask for Divi 5 0.1.0\n"
-"Report-Msgid-Bugs-To: https://github.com/markusritschel/divi5-image-mask/issues\n"
+"Report-Msgid-Bugs-To: https://github.com/markusritschel/divi5-image-mask/"
+"issues\n"
+"POT-Creation-Date: 2026-11-03T20:24:58+00:00\n"
+"PO-Revision-Date: 2026-11-03 20:30+0100\n"
 "Last-Translator: Markus Ritschel\n"
 "Language-Team: German\n"
 "Language: de_DE_formal\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T19:22:52+00:00\n"
-"PO-Revision-Date: 2026-11-03 20:30+0100\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: divi5-image-mask\n"
 
@@ -28,8 +29,12 @@ msgstr ""
 
 #. Description of the plugin
 #: divi5-image-mask.php
-msgid "An image mask for the Image module of the Divi 5 Visual Builder: cut the image into one of Divi's mask shapes or into a custom SVG mask."
-msgstr "Eine Bildmaske für das Bild-Modul des Divi 5 Visual Builders: das Bild in eine von Divis Maskenformen oder eine eigene SVG-Maske schneiden."
+msgid ""
+"An image mask for the Image module of the Divi 5 Visual Builder: cut the "
+"image into one of Divi's mask shapes or into a custom SVG mask."
+msgstr ""
+"Eine Bildmaske für das Bild-Modul des Divi 5 Visual Builders: das Bild in "
+"eine von Divis Maskenformen oder eine eigene SVG-Maske schneiden."
 
 #. Author of the plugin
 #: divi5-image-mask.php
@@ -45,16 +50,24 @@ msgid "Mask Shape"
 msgstr "Maskenform"
 
 #: divi5-image-mask.php:74
-msgid "One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask."
-msgstr "Eine von Divis Maskenformen. Das Bild bleibt sichtbar, wo ein Divi-Hintergrund durch dieselbe Maske scheint."
+msgid ""
+"One of Divi's mask shapes. The image stays visible where a Divi background "
+"would show through the same mask."
+msgstr ""
+"Eine von Divis Maskenformen. Das Bild bleibt sichtbar, wo ein Divi-"
+"Hintergrund durch dieselbe Maske scheint."
 
 #: divi5-image-mask.php:75
 msgid "Custom Mask"
 msgstr "Eigene Maske"
 
 #: divi5-image-mask.php:76
-msgid "An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque."
-msgstr "Ein SVG oder PNG statt der Maskenform. Das Bild bleibt sichtbar, wo die Maske deckend ist."
+msgid ""
+"An SVG or PNG instead of the mask shape. The image stays visible where the "
+"mask is opaque."
+msgstr ""
+"Ein SVG oder PNG statt der Maskenform. Das Bild bleibt sichtbar, wo die "
+"Maske deckend ist."
 
 #: divi5-image-mask.php:77
 msgid "Transform"
@@ -167,3 +180,67 @@ msgstr "Horizontaler Versatz"
 #: divi5-image-mask.php:104
 msgid "Vertical Offset"
 msgstr "Vertikaler Versatz"
+
+#: divi5-image-mask.php:105
+msgid "Animation"
+msgstr "Animation"
+
+#: divi5-image-mask.php:106
+msgid ""
+"Zooms the mask open, from its position. Available with Stretch to Fill and "
+"Custom Size."
+msgstr ""
+"Zieht die Maske von ihrer Position aus auf. Verfügbar bei „Strecken“ und "
+"„Eigene Größe“."
+
+#: divi5-image-mask.php:107
+msgid "None"
+msgstr "Keine"
+
+#: divi5-image-mask.php:108
+msgid "Zoom In"
+msgstr "Einzoomen"
+
+#: divi5-image-mask.php:109
+msgid "Animation Start"
+msgstr "Start der Animation"
+
+#: divi5-image-mask.php:110
+msgid "On Page Load"
+msgstr "Beim Laden der Seite"
+
+#: divi5-image-mask.php:111
+msgid "When Scrolled Into View"
+msgstr "Beim Hineinscrollen"
+
+#: divi5-image-mask.php:112
+msgid "Animation Duration"
+msgstr "Animationsdauer"
+
+#: divi5-image-mask.php:113
+msgid "Animation Delay"
+msgstr "Animationsverzögerung"
+
+#: divi5-image-mask.php:114
+msgid "Animation Speed Curve"
+msgstr "Animationskurve"
+
+#: divi5-image-mask.php:115
+msgid "Ease"
+msgstr "Ease"
+
+#: divi5-image-mask.php:116
+msgid "Ease-In-Out"
+msgstr "Ease-In-Out"
+
+#: divi5-image-mask.php:117
+msgid "Ease-In"
+msgstr "Ease-In"
+
+#: divi5-image-mask.php:118
+msgid "Ease-Out"
+msgstr "Ease-Out"
+
+#: divi5-image-mask.php:119
+msgid "Linear"
+msgstr "Linear"

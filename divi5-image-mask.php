@@ -102,6 +102,21 @@ function d5im_builder_texts(): array {
 		'Left'              => __( 'Left', 'divi5-image-mask' ),
 		'Horizontal Offset' => __( 'Horizontal Offset', 'divi5-image-mask' ),
 		'Vertical Offset'   => __( 'Vertical Offset', 'divi5-image-mask' ),
+		'Animation'         => __( 'Animation', 'divi5-image-mask' ),
+		'Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size.' => __( 'Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size.', 'divi5-image-mask' ),
+		'None'              => __( 'None', 'divi5-image-mask' ),
+		'Zoom In'           => __( 'Zoom In', 'divi5-image-mask' ),
+		'Animation Start'   => __( 'Animation Start', 'divi5-image-mask' ),
+		'On Page Load'      => __( 'On Page Load', 'divi5-image-mask' ),
+		'When Scrolled Into View' => __( 'When Scrolled Into View', 'divi5-image-mask' ),
+		'Animation Duration' => __( 'Animation Duration', 'divi5-image-mask' ),
+		'Animation Delay'   => __( 'Animation Delay', 'divi5-image-mask' ),
+		'Animation Speed Curve' => __( 'Animation Speed Curve', 'divi5-image-mask' ),
+		'Ease'              => __( 'Ease', 'divi5-image-mask' ),
+		'Ease-In-Out'       => __( 'Ease-In-Out', 'divi5-image-mask' ),
+		'Ease-In'           => __( 'Ease-In', 'divi5-image-mask' ),
+		'Ease-Out'          => __( 'Ease-Out', 'divi5-image-mask' ),
+		'Linear'            => __( 'Linear', 'divi5-image-mask' ),
 	);
 }
 
@@ -207,11 +222,12 @@ function d5im_mask_css( array $mask ): string {
 	$positions  = array( "$x $y" );
 	$composite  = '';
 
-	// Inverting a custom mask: subtract it from a full layer.
+	// Inverting a custom mask: subtract it from a full layer. That layer sits at the mask's position, so the zoom
+	// animation (which shrinks every layer to 0) grows both from the same point.
 	if ( '' !== $custom && $invert ) {
 		$layers[]    = 'linear-gradient(#000 0 0)';
 		$sizes[]     = '100% 100%';
-		$positions[] = '0 0';
+		$positions[] = "$x $y";
 		$composite   = 'mask-composite:exclude;';
 	}
 
@@ -219,12 +235,46 @@ function d5im_mask_css( array $mask ): string {
 }
 
 /**
- * Adds the mask to the .et_pb_image_wrap of a rendered Image module, as an inline style.
+ * The CSS `animation` value of a mask's zoom animation, or '' without one.
+ *
+ * The mask grows from size 0 to its own size (keyframes in D5IM_ANIMATION_CSS), around its position. Only for
+ * "Stretch to Fill" and "Custom Size": cover and contain are keywords, which CSS can't interpolate from 0. Same
+ * output as animationCss() in assets/image-mask.js.
+ *
+ * @param array $mask The module's image.advanced.mask value (animation, animationDuration, animationDelay,
+ *                    animationEasing, plus the mask settings).
+ */
+function d5im_animation_css( array $mask ): string {
+	if ( 'zoom' !== ( $mask['animation'] ?? '' ) || ! in_array( $mask['size'] ?? 'stretch', array( 'stretch', 'custom' ), true ) ) {
+		return '';
+	}
+	$time   = fn( $value, $fallback ) => is_string( $value ) && preg_match( '/^\d*\.?\d+(ms|s)?$/', $value ) ? ( is_numeric( $value ) ? $value . 'ms' : $value ) : $fallback;
+	$easing = in_array( $mask['animationEasing'] ?? '', array( 'ease-in-out', 'ease-in', 'ease-out', 'linear' ), true ) ? $mask['animationEasing'] : 'ease';
+	return sprintf( 'd5im-zoom %s %s %s both', $time( $mask['animationDuration'] ?? '', '500ms' ), $easing, $time( $mask['animationDelay'] ?? '', '0ms' ) );
+}
+
+/*
+ * Printed once per page, before the first animated image (inline so it is there before that image is painted).
+ * Each animated .et_pb_image_wrap carries its animation in --d5im-animation and the class d5im-animate-load or
+ * d5im-animate-view. "View" waits for the class d5im-in-view, which the script adds once a fifth of the image is
+ * in the window; until then the mask is closed, but only with JavaScript (class d5im-js), so without it the image
+ * simply shows. Everything only applies without a reduced-motion preference.
+ */
+const D5IM_ANIMATION_CSS = '@keyframes d5im-zoom{from{mask-size:0 0}}'
+	. '@media (prefers-reduced-motion:no-preference){.d5im-animate-load,.d5im-animate-view.d5im-in-view{animation:var(--d5im-animation)}'
+	. '.d5im-js .d5im-animate-view:not(.d5im-in-view){mask-size:0 0!important}}';
+const D5IM_ANIMATION_JS = 'document.documentElement.classList.add("d5im-js");addEventListener("DOMContentLoaded",function(){'
+	. 'var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("d5im-in-view");o.unobserve(e.target)}})},{threshold:0.2});'
+	. 'document.querySelectorAll(".d5im-animate-view").forEach(function(el){o.observe(el)})});';
+
+/**
+ * Adds the mask (and its animation) to the .et_pb_image_wrap of a rendered Image module, as an inline style.
  *
  * @param string $content Rendered block HTML.
  * @param array  $block   Parsed block.
  */
 function d5im_render_block( $content, $block ) {
+	static $assets_printed = false;
 	if ( 'divi/image' !== ( $block['blockName'] ?? '' ) ) {
 		return $content;
 	}
@@ -237,9 +287,19 @@ function d5im_render_block( $content, $block ) {
 	if ( ! $html->next_tag( array( 'class_name' => 'et_pb_image_wrap' ) ) ) {
 		return $content;
 	}
+	$animation = d5im_animation_css( $mask );
+	if ( '' !== $animation ) {
+		$css .= '--d5im-animation:' . $animation . ';';
+		$html->add_class( 'view' === ( $mask['animationTrigger'] ?? 'load' ) ? 'd5im-animate-view' : 'd5im-animate-load' );
+	}
 	$style = trim( (string) $html->get_attribute( 'style' ) );
 	$html->set_attribute( 'style', ( '' === $style ? '' : rtrim( $style, ';' ) . ';' ) . $css );
-	return $html->get_updated_html();
+	$content = $html->get_updated_html();
+	if ( '' !== $animation && ! $assets_printed ) {
+		$assets_printed = true;
+		$content        = '<style id="d5im-animation">' . D5IM_ANIMATION_CSS . '</style><script id="d5im-animation-js">' . D5IM_ANIMATION_JS . '</script>' . $content;
+	}
+	return $content;
 }
 add_filter( 'render_block', 'd5im_render_block', 10, 2 );
 

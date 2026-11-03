@@ -13,8 +13,11 @@ Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 | Transform (Transformation)      | Flip horizontally / vertically, rotate by 90°, invert. A custom mask can only be inverted.                                            |
 | Aspect Ratio (Seitenverhältnis) | Landscape, square or portrait version of Divi's shape (like Divi's mask aspect ratio).                                                |
 | Size (Größe)                    | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |
+| Animation                       | Zoom In (Einzoomen): the mask grows from nothing to its size, from its position, while the image stays still. With Stretch or a custom size. |
 
-The Visual Builder shows the mask live. The mask applies to the whole image frame, so a hover overlay or border set on the image is cut along with it, and a box shadow (drawn outside the frame) disappears.
+**Animation** settings, once Zoom In is chosen: **Animation Start** (On Page Load, or When Scrolled Into View: once a fifth of the image is in the window), **Duration** (default 500 ms), **Delay** and **Speed Curve**, like Divi's own animations. Visitors whose system asks for reduced motion see the mask without animation; without JavaScript a scroll-started image simply shows. For a custom size, set both width and height: an empty one (`auto`) can't be zoomed and the mask appears at once.
+
+The Visual Builder shows the mask live and plays the zoom again whenever you change a mask setting. The mask applies to the whole image frame, so a hover overlay or border set on the image is cut along with it, and a box shadow (drawn outside the frame) disappears.
 
 **SVG uploads**: WordPress refuses SVG files by default. With this plugin active, users who may post unfiltered HTML (administrators) can upload SVGs; other roles can't. PNG or WebP masks with transparency work for everyone.
 
