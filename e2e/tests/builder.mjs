@@ -147,19 +147,25 @@ test('the animation fields show for zoomable sizes, and the preview replays the 
   await expectField('animationTrigger', false);
 
   await edit({ style: 'ellipse', animation: 'zoom' });
-  for (const subName of ['animationTrigger', 'animationDuration', 'animationDelay', 'animationEasing', 'animationRepeat']) await expectField(subName, true);
-  // "Every time in view" is offered with the view start only. (Divi lists a select's options while it is open.)
-  const repeatOptions = async () => {
-    await field('animationRepeat').locator('li.et-vb-selected-item').click();
-    const options = await field('animationRepeat').locator('li[data-value]').evaluateAll((all) => all.map((li) => li.dataset.value));
-    await page.keyboard.press('Escape');
-    return options;
-  };
-  assert.deepEqual(await repeatOptions(), ['once', 'loop']);
-  await edit({ style: 'ellipse', animation: 'zoom', animationTrigger: 'view' });
-  await page.waitForTimeout(500); // Deliberate: the select re-renders after the store change.
-  assert.deepEqual(await repeatOptions(), ['once', 'view', 'loop']);
+  for (const subName of ['animationTrigger', 'animationDuration', 'animationDelay', 'animationEasing', 'animationDirection', 'animationPlays', 'animationLoop']) {
+    await expectField(subName, true);
+  }
+  // Replay belongs to the view start; Loop Endlessly makes the number of plays moot.
+  await expectField('animationReplay', false);
+  await edit({ style: 'ellipse', animation: 'zoom', animationTrigger: 'view', animationLoop: 'on' });
+  await expectField('animationReplay', true);
+  await expectField('animationPlays', false);
   await edit({ style: 'ellipse', animation: 'zoom' });
+  await expectField('animationPlays', true);
+  // Typed into the field, the number of plays is stored without a unit.
+  const playsInput = field('animationPlays').locator('input:not([type="range"])').first();
+  await playsInput.fill('3');
+  await playsInput.press('Enter');
+  await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.effect.getTiming().iterations === 3);
+  assert.equal(
+    await app.evaluate((id) => window.divi.data.select('divi/edit-post').getModuleAttr(id, 'image.advanced.mask').desktop.value.animationPlays, moduleId),
+    '3',
+  );
   await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.animationName === 'd5im-zoom');
 
   // Let it run past where a replay would be, change the duration: it starts again with the new duration.
@@ -194,7 +200,8 @@ test('on a German site the mask group is German', async (t) => {
     labels.map((label) => label.trim().toLowerCase()),
     [
       'Maskenform', 'Eigene Maske', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz',
-      'Animation', 'Start der Animation', 'Animationsdauer', 'Animationsverzögerung', 'Animationskurve', 'Wiederholung der Animation',
+      'Animation', 'Start der Animation', 'Animationsdauer', 'Animationsverzögerung', 'Animationskurve',
+      'Richtung der Animation', 'Anzahl der Durchläufe', 'Endlos wiederholen',
     ].map((label) => label.toLowerCase()),
   );
   // Divi lists a select's options only while it is open.

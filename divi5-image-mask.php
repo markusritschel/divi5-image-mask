@@ -103,9 +103,10 @@ function d5im_builder_texts(): array {
 		'Horizontal Offset' => __( 'Horizontal Offset', 'divi5-image-mask' ),
 		'Vertical Offset'   => __( 'Vertical Offset', 'divi5-image-mask' ),
 		'Animation'         => __( 'Animation', 'divi5-image-mask' ),
-		'Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size.' => __( 'Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size.', 'divi5-image-mask' ),
+		'Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size.' => __( 'Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size.', 'divi5-image-mask' ),
 		'None'              => __( 'None', 'divi5-image-mask' ),
 		'Zoom In'           => __( 'Zoom In', 'divi5-image-mask' ),
+		'Zoom Out'          => __( 'Zoom Out', 'divi5-image-mask' ),
 		'Animation Start'   => __( 'Animation Start', 'divi5-image-mask' ),
 		'On Page Load'      => __( 'On Page Load', 'divi5-image-mask' ),
 		'When Scrolled Into View' => __( 'When Scrolled Into View', 'divi5-image-mask' ),
@@ -117,10 +118,14 @@ function d5im_builder_texts(): array {
 		'Ease-In'           => __( 'Ease-In', 'divi5-image-mask' ),
 		'Ease-Out'          => __( 'Ease-Out', 'divi5-image-mask' ),
 		'Linear'            => __( 'Linear', 'divi5-image-mask' ),
-		'Animation Repeat'  => __( 'Animation Repeat', 'divi5-image-mask' ),
-		'Once'              => __( 'Once', 'divi5-image-mask' ),
-		'Every Time in View' => __( 'Every Time in View', 'divi5-image-mask' ),
-		'Loop'              => __( 'Loop', 'divi5-image-mask' ),
+		'Animation Direction' => __( 'Animation Direction', 'divi5-image-mask' ),
+		'Alternate plays every second run backwards. With an even number of plays the animation ends where it started.' => __( 'Alternate plays every second run backwards. With an even number of plays the animation ends where it started.', 'divi5-image-mask' ),
+		'Normal'            => __( 'Normal', 'divi5-image-mask' ),
+		'Alternate'         => __( 'Alternate', 'divi5-image-mask' ),
+		'Number of Plays'   => __( 'Number of Plays', 'divi5-image-mask' ),
+		'Loop Endlessly'    => __( 'Loop Endlessly', 'divi5-image-mask' ),
+		'Replay When Scrolled Back Into View' => __( 'Replay When Scrolled Back Into View', 'divi5-image-mask' ),
+		'Once the image has left the window completely, the mask returns to its start and plays again on the way back.' => __( 'Once the image has left the window completely, the mask returns to its start and plays again on the way back.', 'divi5-image-mask' ),
 	);
 }
 
@@ -212,66 +217,93 @@ function d5im_mask_css( array $mask ): string {
 		return '';
 	}
 
-	if ( 'custom' === $size ) {
-		$css_size = d5im_length( $mask['width'] ?? '', 'auto' ) . ' ' . d5im_length( $mask['height'] ?? '', 'auto' );
-	} else {
-		$css_size = in_array( $size, array( 'cover', 'contain' ), true ) ? $size : '100% 100%';
-	}
 	$position   = explode( ' ', (string) ( $mask['position'] ?? 'center' ) );
 	$x          = array_values( array_intersect( $position, array( 'left', 'right' ) ) )[0] ?? '';
 	$y          = array_values( array_intersect( $position, array( 'top', 'bottom' ) ) )[0] ?? '';
 	$x          = '' === $x ? 'left 50%' : $x . ' ' . d5im_length( $mask['horizontalOffset'] ?? '', '0%' );
 	$y          = '' === $y ? 'top 50%' : $y . ' ' . d5im_length( $mask['verticalOffset'] ?? '', '0%' );
-	$sizes      = array( $css_size );
 	$positions  = array( "$x $y" );
 	$composite  = '';
 
-	// Inverting a custom mask: subtract it from a full layer. That layer sits at the mask's position, so the zoom
-	// animation (which shrinks every layer to 0) grows both from the same point.
+	// Inverting a custom mask: subtract it from a full layer (its size: d5im_mask_sizes()). That layer sits at the
+	// mask's position, so the zoom animation scales both layers from the same point.
 	if ( '' !== $custom && $invert ) {
 		$layers[]    = 'linear-gradient(#000 0 0)';
-		$sizes[]     = '100% 100%';
 		$positions[] = "$x $y";
 		$composite   = 'mask-composite:exclude;';
 	}
 
-	return 'mask-image:' . implode( ',', $layers ) . ';mask-size:' . implode( ',', $sizes ) . ';mask-position:' . implode( ',', $positions ) . ';mask-repeat:no-repeat;' . $composite;
+	return 'mask-image:' . implode( ',', $layers ) . ';mask-size:' . implode( ',', d5im_mask_sizes( $mask ) ) . ';mask-position:' . implode( ',', $positions ) . ';mask-repeat:no-repeat;' . $composite;
 }
 
 /**
- * The CSS `animation` value of a mask's zoom animation, or '' without one.
+ * The mask's layer sizes (CSS mask-size values): the mask, plus the full layer of an inverted custom mask.
  *
- * The mask grows from size 0 to its own size (keyframes in D5IM_ANIMATION_CSS), around its position. Only for
- * "Stretch to Fill" and "Custom Size": cover and contain are keywords, which CSS can't interpolate from 0. Same
- * output as animationCss() in assets/image-mask.js.
+ * @param array $mask The module's image.advanced.mask value.
+ */
+function d5im_mask_sizes( array $mask ): array {
+	$size = (string) ( $mask['size'] ?? 'stretch' );
+	if ( 'custom' === $size ) {
+		$sizes = array( d5im_length( $mask['width'] ?? '', 'auto' ) . ' ' . d5im_length( $mask['height'] ?? '', 'auto' ) );
+	} else {
+		$sizes = array( in_array( $size, array( 'cover', 'contain' ), true ) ? $size : '100% 100%' );
+	}
+	$transform = is_array( $mask['transform'] ?? null ) ? $mask['transform'] : array();
+	if ( '' !== trim( (string) ( $mask['custom'] ?? '' ) ) && in_array( 'invert', $transform, true ) ) {
+		$sizes[] = '100% 100%';
+	}
+	return $sizes;
+}
+
+/**
+ * The CSS custom properties of a mask's zoom animation, or '' without one: --d5im-start (the mask-size it starts
+ * from) and --d5im-animation (the `animation` value; keyframes in D5IM_ANIMATION_CSS).
+ *
+ * Zoom In starts at size 0, Zoom Out at three times each layer's size; both end at the mask's own size, scaling
+ * around its position. Only for "Stretch to Fill" and "Custom Size": cover and contain are keywords, which CSS
+ * can't interpolate. Plays (1-10) or Loop Endlessly set the repeat count, Direction "alternate" plays every second
+ * run backwards. "Replay" is a class for the script (d5im_render_block()), not CSS. Same output as animationCss()
+ * in assets/image-mask.js.
  *
  * @param array $mask The module's image.advanced.mask value (animation, animationDuration, animationDelay,
- *                    animationEasing, plus the mask settings).
+ *                    animationEasing, animationDirection, animationPlays, animationLoop, plus the mask settings).
  */
 function d5im_animation_css( array $mask ): string {
-	if ( 'zoom' !== ( $mask['animation'] ?? '' ) || ! in_array( $mask['size'] ?? 'stretch', array( 'stretch', 'custom' ), true ) ) {
+	$animation = $mask['animation'] ?? '';
+	if ( ! in_array( $animation, array( 'zoom', 'zoomOut' ), true ) || ! in_array( $mask['size'] ?? 'stretch', array( 'stretch', 'custom' ), true ) ) {
 		return '';
 	}
-	$time   = fn( $value, $fallback ) => is_string( $value ) && preg_match( '/^\d*\.?\d+(ms|s)?$/', $value ) ? ( is_numeric( $value ) ? $value . 'ms' : $value ) : $fallback;
-	$easing = in_array( $mask['animationEasing'] ?? '', array( 'ease-in-out', 'ease-in', 'ease-out', 'linear' ), true ) ? $mask['animationEasing'] : 'ease';
-	// "Loop" repeats endlessly. "Every time in view" is a class for the script (d5im_render_block()), not CSS.
-	$loop = 'loop' === ( $mask['animationRepeat'] ?? 'once' ) ? ' infinite' : '';
-	return sprintf( 'd5im-zoom %s %s %s%s both', $time( $mask['animationDuration'] ?? '', '500ms' ), $easing, $time( $mask['animationDelay'] ?? '', '0ms' ), $loop );
+	$time      = fn( $value, $fallback ) => is_string( $value ) && preg_match( '/^\d*\.?\d+(ms|s)?$/', $value ) ? ( is_numeric( $value ) ? $value . 'ms' : $value ) : $fallback;
+	$easing    = in_array( $mask['animationEasing'] ?? '', array( 'ease-in-out', 'ease-in', 'ease-out', 'linear' ), true ) ? $mask['animationEasing'] : 'ease';
+	$plays     = 'on' === ( $mask['animationLoop'] ?? 'off' ) ? 'infinite' : (string) min( 10, max( 1, (int) ( $mask['animationPlays'] ?? 1 ) ) );
+	$direction = 'alternate' === ( $mask['animationDirection'] ?? '' ) ? 'alternate' : 'normal';
+	$start     = 'zoom' === $animation
+		? '0 0'
+		: implode( ',', array_map( fn( $size ) => implode( ' ', array_map( fn( $value ) => "calc($value * 3)", explode( ' ', $size ) ) ), d5im_mask_sizes( $mask ) ) );
+	return sprintf(
+		'--d5im-start:%s;--d5im-animation:d5im-zoom %s %s %s %s %s both;',
+		$start,
+		$time( $mask['animationDuration'] ?? '', '500ms' ),
+		$easing,
+		$time( $mask['animationDelay'] ?? '', '0ms' ),
+		$plays,
+		$direction
+	);
 }
 
 /*
  * Printed once per page, before the first animated image (inline so it is there before that image is painted).
- * Each animated .et_pb_image_wrap carries its animation in --d5im-animation and the class d5im-animate-load or
- * d5im-animate-view. "View" waits for the class d5im-in-view, which the script adds once a fifth of the image is
- * in the window; until then the mask is closed, but only with JavaScript (class d5im-js), so without it the image
- * simply shows. With d5im-repeat-view ("Every time in view") the script takes the class away again once the image
- * is completely out of the window, so the mask closes unseen and zooms again on the way back. (isIntersecting
- * alone is true for any sliver in view, hence the ratio check.) Everything only applies without a reduced-motion
- * preference.
+ * Each animated .et_pb_image_wrap carries --d5im-start and --d5im-animation (d5im_animation_css()) and the class
+ * d5im-animate-load or d5im-animate-view. "View" waits for the class d5im-in-view, which the script adds once a
+ * fifth of the image is in the window; until then the mask is held at its start size, but only with JavaScript
+ * (class d5im-js), so without it the image simply shows. With d5im-repeat-view ("Replay") the script takes the
+ * class away again once the image is completely out of the window, so the mask returns to its start unseen and
+ * zooms again on the way back. (isIntersecting alone is true for any sliver in view, hence the ratio check.)
+ * Everything only applies without a reduced-motion preference.
  */
-const D5IM_ANIMATION_CSS = '@keyframes d5im-zoom{from{mask-size:0 0}}'
+const D5IM_ANIMATION_CSS = '@keyframes d5im-zoom{from{mask-size:var(--d5im-start)}}'
 	. '@media (prefers-reduced-motion:no-preference){.d5im-animate-load,.d5im-animate-view.d5im-in-view{animation:var(--d5im-animation)}'
-	. '.d5im-js .d5im-animate-view:not(.d5im-in-view){mask-size:0 0!important}}';
+	. '.d5im-js .d5im-animate-view:not(.d5im-in-view){mask-size:var(--d5im-start)!important}}';
 const D5IM_ANIMATION_JS = 'document.documentElement.classList.add("d5im-js");addEventListener("DOMContentLoaded",function(){'
 	. 'var o=new IntersectionObserver(function(es){es.forEach(function(e){var c=e.target.classList,r=c.contains("d5im-repeat-view");'
 	. 'if(e.intersectionRatio>=0.2){c.add("d5im-in-view");if(!r)o.unobserve(e.target)}else if(r&&!e.isIntersecting){c.remove("d5im-in-view")}})},{threshold:[0,0.2]});'
@@ -299,10 +331,10 @@ function d5im_render_block( $content, $block ) {
 	}
 	$animation = d5im_animation_css( $mask );
 	if ( '' !== $animation ) {
-		$css .= '--d5im-animation:' . $animation . ';';
+		$css    .= $animation;
 		$on_view = 'view' === ( $mask['animationTrigger'] ?? 'load' );
 		$html->add_class( $on_view ? 'd5im-animate-view' : 'd5im-animate-load' );
-		if ( $on_view && 'view' === ( $mask['animationRepeat'] ?? 'once' ) ) {
+		if ( $on_view && 'on' === ( $mask['animationReplay'] ?? 'off' ) ) {
 			$html->add_class( 'd5im-repeat-view' );
 		}
 	}

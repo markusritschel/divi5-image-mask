@@ -108,11 +108,11 @@ test('with reduced motion the mask is shown without animation', async (t) => {
   }
 });
 
-/** Repeat count and play state of the wrap's animation (null without one). */
+/** Repeat count, direction and play state of the wrap's animation (null without one). */
 const playOf = (locator) =>
   locator.evaluate((el) => {
     const [a] = el.getAnimations();
-    return a ? { iterations: a.effect.getTiming().iterations, state: a.playState } : null;
+    return a ? { iterations: a.effect.getTiming().iterations, direction: a.effect.getTiming().direction, state: a.playState } : null;
   });
 /** Waits until the i-th image's mask is (or isn't) marked as in view by the page's script. */
 const inView = (page, i, expected) =>
@@ -120,24 +120,33 @@ const inView = (page, i, expected) =>
     timeout: 5000,
   });
 
-test('Loop repeats the zoom endlessly, Once plays it a single time', async (t) => {
+test('Plays, Loop Endlessly and Direction set how often and which way the zoom runs', async (t) => {
   if (!diviActive()) return t.skip(SKIP);
   const { page, errors } = await openPage(t, [
-    { style: 'ellipse', ...onLoad, animationRepeat: 'loop' },
+    { style: 'ellipse', ...onLoad, animationLoop: 'on' },
+    { style: 'ellipse', ...onLoad, animationPlays: '3', animationDirection: 'alternate' },
     { style: 'ellipse', ...onLoad },
-    // "Every time in view" needs the view start: with the load start it plays once.
-    { style: 'ellipse', ...onLoad, animationRepeat: 'view' },
+    // Loop wins over a number of plays.
+    { style: 'ellipse', ...onLoad, animationPlays: '3', animationLoop: 'on' },
+    // Out of range: at most 10.
+    { style: 'ellipse', ...onLoad, animationPlays: '25' },
+    // Replay needs the view start: with the load start it has no effect.
+    { style: 'ellipse', ...onLoad, animationReplay: 'on' },
   ]);
-  assert.deepEqual(await playOf(wraps(page).nth(0)), { iterations: Infinity, state: 'running' });
-  assert.equal((await playOf(wraps(page).nth(1))).iterations, 1);
-  assert.equal((await playOf(wraps(page).nth(2))).iterations, 1);
+  const play = (i) => playOf(wraps(page).nth(i));
+  assert.deepEqual(await play(0), { iterations: Infinity, direction: 'normal', state: 'running' });
+  assert.deepEqual(await play(1), { iterations: 3, direction: 'alternate', state: 'running' });
+  assert.equal((await play(2)).iterations, 1);
+  assert.equal((await play(3)).iterations, Infinity);
+  assert.equal((await play(4)).iterations, 10);
+  assert.equal(await wraps(page).nth(5).evaluate((el) => el.classList.contains('d5im-repeat-view')), false);
   assert.deepEqual(errors, []);
 });
 
-test('scrolled out and back, Every Time in View zooms again and Once does not', async (t) => {
+test('scrolled out and back, a mask with Replay zooms again and one without does not', async (t) => {
   if (!diviActive()) return t.skip(SKIP);
   // Two scroll-started images between plain ones, in a 400 px window: each can be scrolled fully out of view.
-  const { page, errors } = await openPage(t, [null, { style: 'ellipse', ...onView }, { style: 'ellipse', ...onView, animationRepeat: 'view' }, null, null, null]);
+  const { page, errors } = await openPage(t, [null, { style: 'ellipse', ...onView }, { style: 'ellipse', ...onView, animationReplay: 'on' }, null, null, null]);
   const [once, again, last] = [wraps(page).nth(1), wraps(page).nth(2), wraps(page).nth(5)];
 
   await once.scrollIntoViewIfNeeded();
@@ -148,17 +157,36 @@ test('scrolled out and back, Every Time in View zooms again and Once does not', 
   assert.equal((await playOf(once)).state, 'finished');
   assert.equal((await playOf(again)).state, 'finished');
 
-  // Fully out of view: the repeating mask closes again, the other one stays open.
+  // Fully out of view: the replaying mask closes again, the other one stays open.
   await last.scrollIntoViewIfNeeded();
   await inView(page, 2, false);
   assert.equal(await maskSize(again), '0px 0px');
   assert.equal(await maskSize(once), '100% 100%');
 
-  // Back: only the repeating one zooms again.
+  // Back: only the replaying one zooms again.
   await again.scrollIntoViewIfNeeded();
   await inView(page, 2, true);
   assert.equal((await playOf(again)).state, 'running');
   await once.scrollIntoViewIfNeeded();
   assert.equal((await playOf(once)).state, 'finished');
+  assert.deepEqual(errors, []);
+});
+
+test('Zoom Out shrinks the mask from three times its size onto the shape', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  const zoomOut = { style: 'ellipse', animation: 'zoomOut' };
+  // The third image is below the 400 px window: a scroll-started Zoom Out waits at its start size.
+  const { page, errors } = await openPage(t, [{ ...zoomOut, animationTrigger: 'load' }, null, { ...zoomOut, animationTrigger: 'view' }]);
+  const wrap = wraps(page).nth(0);
+
+  assert.deepEqual(await animationsOf(wrap), [{ name: 'd5im-zoom', duration: 500, delay: 0, easing: 'ease' }]);
+  await seek(wrap, 0);
+  const start = await colorsAt(page, wrap, [center, corner]);
+  assert.ok(start.every(isRed), `start: most of the image shows: ${start}`);
+  await seek(wrap, 1);
+  const [visible, masked] = await colorsAt(page, wrap, [center, corner]);
+  assert.ok(isRed(visible) && !isRed(masked), `end: ${visible} / ${masked}`);
+
+  assert.equal(await maskSize(wraps(page).nth(2)), '300% 300%');
   assert.deepEqual(errors, []);
 });

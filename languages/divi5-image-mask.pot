@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T20:46:59+00:00\n"
+"POT-Creation-Date: 2026-11-03T21:01:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: divi5-image-mask\n"
@@ -171,7 +171,7 @@ msgid "Animation"
 msgstr ""
 
 #: divi5-image-mask.php:106
-msgid "Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size."
+msgid "Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size."
 msgstr ""
 
 #: divi5-image-mask.php:107
@@ -183,61 +183,81 @@ msgid "Zoom In"
 msgstr ""
 
 #: divi5-image-mask.php:109
-msgid "Animation Start"
+msgid "Zoom Out"
 msgstr ""
 
 #: divi5-image-mask.php:110
-msgid "On Page Load"
+msgid "Animation Start"
 msgstr ""
 
 #: divi5-image-mask.php:111
-msgid "When Scrolled Into View"
+msgid "On Page Load"
 msgstr ""
 
 #: divi5-image-mask.php:112
-msgid "Animation Duration"
+msgid "When Scrolled Into View"
 msgstr ""
 
 #: divi5-image-mask.php:113
-msgid "Animation Delay"
+msgid "Animation Duration"
 msgstr ""
 
 #: divi5-image-mask.php:114
-msgid "Animation Speed Curve"
+msgid "Animation Delay"
 msgstr ""
 
 #: divi5-image-mask.php:115
-msgid "Ease"
+msgid "Animation Speed Curve"
 msgstr ""
 
 #: divi5-image-mask.php:116
-msgid "Ease-In-Out"
+msgid "Ease"
 msgstr ""
 
 #: divi5-image-mask.php:117
-msgid "Ease-In"
+msgid "Ease-In-Out"
 msgstr ""
 
 #: divi5-image-mask.php:118
-msgid "Ease-Out"
+msgid "Ease-In"
 msgstr ""
 
 #: divi5-image-mask.php:119
-msgid "Linear"
+msgid "Ease-Out"
 msgstr ""
 
 #: divi5-image-mask.php:120
-msgid "Animation Repeat"
+msgid "Linear"
 msgstr ""
 
 #: divi5-image-mask.php:121
-msgid "Once"
+msgid "Animation Direction"
 msgstr ""
 
 #: divi5-image-mask.php:122
-msgid "Every Time in View"
+msgid "Alternate plays every second run backwards. With an even number of plays the animation ends where it started."
 msgstr ""
 
 #: divi5-image-mask.php:123
-msgid "Loop"
+msgid "Normal"
+msgstr ""
+
+#: divi5-image-mask.php:124
+msgid "Alternate"
+msgstr ""
+
+#: divi5-image-mask.php:125
+msgid "Number of Plays"
+msgstr ""
+
+#: divi5-image-mask.php:126
+msgid "Loop Endlessly"
+msgstr ""
+
+#: divi5-image-mask.php:127
+msgid "Replay When Scrolled Back Into View"
+msgstr ""
+
+#: divi5-image-mask.php:128
+msgid "Once the image has left the window completely, the mask returns to its start and plays again on the way back."
 msgstr ""

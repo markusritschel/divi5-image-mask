@@ -73,16 +73,9 @@
       return "";
     }
 
-    const cssSize =
-      size === "custom"
-        ? `${length(mask.width, "auto")} ${length(mask.height, "auto")}`
-        : ["cover", "contain"].includes(size)
-          ? size
-          : "100% 100%";
     const position = String(mask.position ?? "center").split(" ");
     const x = position.find((word) => word === "left" || word === "right");
     const y = position.find((word) => word === "top" || word === "bottom");
-    const sizes = [cssSize];
     const positions = [
       `${x ? `${x} ${length(mask.horizontalOffset, "0%")}` : "left 50%"} ${y ? `${y} ${length(mask.verticalOffset, "0%")}` : "top 50%"}`,
     ];
@@ -91,18 +84,34 @@
     // Inverting a custom mask: subtract it from a full layer, at the mask's position (see the PHP).
     if (custom && invert) {
       layers.push("linear-gradient(#000 0 0)");
-      sizes.push("100% 100%");
       positions.push(positions[0]);
       composite = "mask-composite:exclude;";
     }
 
-    return `mask-image:${layers.join(",")};mask-size:${sizes.join(",")};mask-position:${positions.join(",")};mask-repeat:no-repeat;${composite}`;
+    return `mask-image:${layers.join(",")};mask-size:${maskSizes(mask).join(",")};mask-position:${positions.join(",")};mask-repeat:no-repeat;${composite}`;
   };
 
-  // The zoom animation needs sizes CSS can interpolate from 0: not the keywords cover and contain.
+  // Same output as d5im_mask_sizes() in divi5-image-mask.php.
+  const maskSizes = (mask) => {
+    const size = mask.size ?? "stretch";
+    const sizes = [
+      size === "custom"
+        ? `${length(mask.width, "auto")} ${length(mask.height, "auto")}`
+        : ["cover", "contain"].includes(size)
+          ? size
+          : "100% 100%",
+    ];
+    if (customOf(mask) && (mask.transform ?? []).includes?.("invert")) {
+      sizes.push("100% 100%");
+    }
+    return sizes;
+  };
+
+  // The zoom animation needs sizes CSS can interpolate: not the keywords cover and contain.
   const isZoomable = (mask) =>
     hasMask(mask) && ["stretch", "custom"].includes(mask.size ?? "stretch");
-  const isAnimated = (mask) => isZoomable(mask) && mask.animation === "zoom";
+  const isAnimated = (mask) =>
+    isZoomable(mask) && ["zoom", "zoomOut"].includes(mask.animation);
   const time = (value, fallback) =>
     typeof value === "string" && /^\d*\.?\d+(ms|s)?$/.test(value)
       ? /^[\d.]+$/.test(value)
@@ -120,8 +129,18 @@
     )
       ? mask.animationEasing
       : "ease";
-    const loop = mask.animationRepeat === "loop" ? " infinite" : "";
-    return `d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")}${loop} both`;
+    const plays =
+      mask.animationLoop === "on"
+        ? "infinite"
+        : String(Math.min(10, Math.max(1, parseInt(mask.animationPlays ?? 1, 10) || 1)));
+    const direction = mask.animationDirection === "alternate" ? "alternate" : "normal";
+    const start =
+      mask.animation === "zoom"
+        ? "0 0"
+        : maskSizes(mask)
+            .map((size) => size.split(" ").map((value) => `calc(${value} * 3)`).join(" "))
+            .join(",");
+    return `--d5im-start:${start};--d5im-animation:d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")} ${plays} ${direction} both;`;
   };
 
   // Divi's Background > Mask fields, without colour and blend mode (meaningless for a clip). One value for all
@@ -159,11 +178,6 @@
     max: 100,
     step: 1,
   });
-  const repeatOptions = {
-    once: { label: __("Once") },
-    view: { label: __("Every Time in View") },
-    loop: { label: __("Loop") },
-  };
   const transformOptions = {
     flipHorizontal: {
       icon: "divi/flip-horizontal",
@@ -314,11 +328,15 @@
       "animation",
       110,
       __("Animation"),
-      __("Zooms the mask open, from its position. Available with Stretch to Fill and Custom Size."),
+      __("Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size."),
       {
         name: "divi/select",
         props: {
-          options: { none: { label: __("None") }, zoom: { label: __("Zoom In") } },
+          options: {
+            none: { label: __("None") },
+            zoom: { label: __("Zoom In") },
+            zoomOut: { label: __("Zoom Out") },
+          },
         },
       },
       isZoomable,
@@ -379,24 +397,53 @@
       isAnimated,
       { defaultAttr: { desktop: { value: { animationEasing: "ease" } } } },
     ),
-    animationRepeat: field(
-      "animationRepeat",
+    animationDirection: field(
+      "animationDirection",
       160,
-      __("Animation Repeat"),
-      "",
-      { name: "divi/select", props: { options: repeatOptions } },
-      isAnimated,
+      __("Animation Direction"),
+      __("Alternate plays every second run backwards. With an even number of plays the animation ends where it started."),
       {
-        defaultAttr: { desktop: { value: { animationRepeat: "once" } } },
-        // "Every time in view" only with the view start. (The props Divi passes in carry no options to filter.)
-        filterComponentProps: (props) => {
-          if (maskOf(props.attrs).animationTrigger === "view") {
-            return { ...props, options: repeatOptions };
-          }
-          const { view, ...options } = repeatOptions;
-          return { ...props, options };
+        name: "divi/select",
+        props: {
+          options: {
+            normal: { label: __("Normal") },
+            alternate: { label: __("Alternate") },
+          },
         },
       },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationDirection: "normal" } } } },
+    ),
+    animationPlays: field(
+      "animationPlays",
+      170,
+      __("Number of Plays"),
+      "",
+      {
+        name: "divi/range",
+        // Unitless, like Divi's own count fields.
+        props: { cssProperty: "z-index", defaultUnit: "", allowedUnits: [""], min: 1, minLimit: 1, max: 10, step: 1 },
+      },
+      (mask) => isAnimated(mask) && mask.animationLoop !== "on",
+      { defaultAttr: { desktop: { value: { animationPlays: "1" } } } },
+    ),
+    animationLoop: field(
+      "animationLoop",
+      180,
+      __("Loop Endlessly"),
+      "",
+      { name: "divi/toggle" },
+      isAnimated,
+      { defaultAttr: { desktop: { value: { animationLoop: "off" } } } },
+    ),
+    animationReplay: field(
+      "animationReplay",
+      190,
+      __("Replay When Scrolled Back Into View"),
+      __("Once the image has left the window completely, the mask returns to its start and plays again on the way back."),
+      { name: "divi/toggle" },
+      (mask) => isAnimated(mask) && mask.animationTrigger === "view",
+      { defaultAttr: { desktop: { value: { animationReplay: "off" } } } },
     ),
   };
 
@@ -443,7 +490,7 @@
 
   // The zoom plays like "On Page Load" (the page's keyframes, see D5IM_ANIMATION_CSS), whatever the start setting,
   // and again whenever a module's mask settings change.
-  const KEYFRAMES = "@keyframes d5im-zoom{from{mask-size:0 0}}";
+  const KEYFRAMES = "@keyframes d5im-zoom{from{mask-size:var(--d5im-start)}}";
   const lastSettings = new Map(); // Module id => its rules, to see which changed.
 
   let queued = false;
@@ -467,10 +514,10 @@
         return;
       }
       const selector = `.et_pb_image_${id} .et_pb_image_wrap`;
-      let rule = `${selector}{${css}}`;
       const animation = animationCss(mask);
+      let rule = `${selector}{${css}${animation}}`;
       if (animation) {
-        rule += `@media (prefers-reduced-motion:no-preference){${selector}{animation:${animation}}}`;
+        rule += `@media (prefers-reduced-motion:no-preference){${selector}{animation:var(--d5im-animation)}}`;
         if (lastSettings.get(id) !== rule) {
           changed.push(moduleEl);
         }
