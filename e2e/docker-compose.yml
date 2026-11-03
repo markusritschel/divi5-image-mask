@@ -1,0 +1,47 @@
+# Local test environment: WordPress + this plugin (read-only); Divi 5 is added by setup.sh.
+# Own project name and port, so it runs next to the other Divi plugins' test sites.
+name: d5im-e2e
+
+x-wp-env: &wp-env
+  WORDPRESS_DB_HOST: db
+  WORDPRESS_DB_USER: wp
+  WORDPRESS_DB_PASSWORD: wp
+  WORDPRESS_DB_NAME: wp
+
+x-volumes: &volumes
+  - wp:/var/www/html
+  - ..:/var/www/html/wp-content/plugins/divi5-image-mask:ro
+  - ./php:/e2e-php:ro
+
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
+  wp:
+    image: wordpress:php8.4-apache
+    depends_on: [db]
+    ports: ["${E2E_PORT:-8094}:80"]
+    environment:
+      <<: *wp-env
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        define('WP_MEMORY_LIMIT', '512M');
+    volumes: *volumes
+  cli:
+    image: wordpress:cli-php8.4
+    depends_on: [db, wp]
+    user: "33:33"
+    environment:
+      <<: *wp-env
+      WORDPRESS_CONFIG_EXTRA: define('WP_MEMORY_LIMIT', '512M');
+    volumes: *volumes
+    profiles: [cli]
+
+volumes:
+  wp:
