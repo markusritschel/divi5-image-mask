@@ -1,22 +1,26 @@
 # Image Mask for Divi 5
 
-Small WordPress plugin that adds a **Bildmaske** (image mask) group to the Divi 5 Image module: cut the image into one of Divi's mask shapes (the same ones as **Background > Mask**) or into a mask you upload yourself.
+Small WordPress plugin that adds an **Image Mask** group to the Divi 5 Image module: cut the image into one of Divi's mask shapes (the same ones as **Background > Mask**) or into a mask you upload yourself.
 
 ## Use in Divi
 
-Open an Image module, **Design > Bildmaske**:
+Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 
-| Field            | What it does                                                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Maskenform       | One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask.                          |
-| Eigene Maske     | An SVG or PNG instead of the shape. The image stays visible where the mask is opaque (drawn), and disappears where it is transparent. |
-| Transformation   | Flip horizontally / vertically, rotate by 90°, invert. A custom mask can only be inverted.                                            |
-| Seitenverhältnis | Landscape, square or portrait version of Divi's shape (like Divi's mask aspect ratio).                                                |
-| Größe            | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |
+| Field (German)                  | What it does                                                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Mask Shape (Maskenform)         | One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask.                          |
+| Custom Mask (Eigene Maske)      | An SVG or PNG instead of the shape. The image stays visible where the mask is opaque (drawn), and disappears where it is transparent. |
+| Transform (Transformation)      | Flip horizontally / vertically, rotate by 90°, invert. A custom mask can only be inverted.                                            |
+| Aspect Ratio (Seitenverhältnis) | Landscape, square or portrait version of Divi's shape (like Divi's mask aspect ratio).                                                |
+| Size (Größe)                    | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |
 
 The Visual Builder shows the mask live. The mask applies to the whole image frame, so a hover overlay or border set on the image is cut along with it, and a box shadow (drawn outside the frame) disappears.
 
 **SVG uploads**: WordPress refuses SVG files by default. With this plugin active, users who may post unfiltered HTML (administrators) can upload SVGs; other roles can't. PNG or WebP masks with transparency work for everyone.
+
+## Languages
+
+English, and German (`de_DE`, `de_DE_formal`) included. The builder follows the site language (**Settings > General > Site Language**).
 
 ## Requirements
 
