@@ -15,7 +15,11 @@ test('the builder script shows only texts the PHP translates, all of them in Ger
 
   for (const locale of ['de_DE', 'de_DE_formal']) {
     const po = read(`languages/divi5-image-mask-${locale}.po`);
-    const translated = new Map([...po.matchAll(/^msgid "((?:[^"\\]|\\.)*)"\nmsgstr "((?:[^"\\]|\\.)*)"/gm)].map((m) => [unescape(m[1]), unescape(m[2])]));
+    // Entries may be wrapped over several "…" lines (msgmerge, Poedit); the pieces are joined.
+    const joined = (lines) => [...lines.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]).join('');
+    const translated = new Map(
+      [...po.matchAll(/^msgid ((?:"(?:[^"\\]|\\.)*"\n)+)msgstr ((?:"(?:[^"\\]|\\.)*"(?:\n|$))+)/gm)].map((m) => [unescape(joined(m[1])), unescape(joined(m[2]))]),
+    );
     const missing = [...php].filter((s) => !translated.get(s));
     assert.deepEqual(missing, [], `${locale}: untranslated`);
   }
