@@ -17,7 +17,7 @@ staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 
 mkdir -p "$staging/$slug"
-cp -R "$slug.php" README.md assets vendor "$staging/$slug/"
+cp -R "$slug.php" README.md assets languages vendor "$staging/$slug/"
 
 mkdir -p dist
 rm -f "dist/$slug-$version.zip"

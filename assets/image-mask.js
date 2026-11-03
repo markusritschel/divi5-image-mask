@@ -1,4 +1,4 @@
-// Visual Builder: a "Bildmaske" group on Divi 5's Image module (Design tab), modelled on Divi's Background > Mask
+// Visual Builder: an "Image Mask" group on Divi 5's Image module (Design tab), modelled on Divi's Background > Mask
 // settings, plus its live preview. Saved at image.advanced.mask (desktop value only); on the page the plugin's PHP
 // (d5im_mask_css) adds the same CSS to the module's .et_pb_image_wrap.
 (function () {
@@ -9,6 +9,9 @@
   // Divi's mask shapes. Divi loads that bundle itself after the first render, so it is looked up when needed.
   const library = () => window.divi?.maskAndPatternLibrary;
   const GROUP = "designImageMask";
+  // Texts in the site's language, translated by the plugin's PHP (d5im_builder_texts()); English without it.
+  const texts = window.Divi5ImageMaskData?.texts ?? {};
+  const __ = (text) => texts[text] ?? text;
 
   const maskOf = (attrs) => attrs?.image?.advanced?.mask?.desktop?.value ?? {};
   const customOf = (mask) =>
@@ -134,32 +137,32 @@
   const transformOptions = {
     flipHorizontal: {
       icon: "divi/flip-horizontal",
-      label: "Horizontal spiegeln",
+      label: __("Flip Horizontal"),
     },
-    flipVertical: { icon: "divi/flip-vertical", label: "Vertikal spiegeln" },
-    rotate: { icon: "divi/transform-rotate", label: "Um 90° drehen" },
-    invert: { icon: "divi/transform-invert", label: "Umkehren" },
+    flipVertical: { icon: "divi/flip-vertical", label: __("Flip Vertical") },
+    rotate: { icon: "divi/transform-rotate", label: __("Rotate 90°") },
+    invert: { icon: "divi/transform-invert", label: __("Invert") },
   };
 
   const items = {
     style: field(
       "style",
       10,
-      "Maskenform",
-      "Eine von Divis Maskenformen. Das Bild bleibt sichtbar, wo ein Divi-Hintergrund durch dieselbe Maske scheint.",
+      __("Mask Shape"),
+      __("One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask."),
       { name: "divi/select-mask", props: { hasPreview: false } },
     ),
     custom: field(
       "custom",
       20,
-      "Eigene Maske",
-      "Ein SVG oder PNG statt der Maskenform. Das Bild bleibt sichtbar, wo die Maske deckend ist.",
+      __("Custom Mask"),
+      __("An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque."),
       { name: "divi/upload" },
     ),
     transform: field(
       "transform",
       30,
-      "Transformation",
+      __("Transform"),
       "",
       {
         name: "divi/button-options",
@@ -179,7 +182,7 @@
     aspectRatio: field(
       "aspectRatio",
       40,
-      "Seitenverhältnis",
+      __("Aspect Ratio"),
       "",
       {
         name: "divi/button-options",
@@ -187,12 +190,12 @@
           options: {
             landscape: {
               icon: "divi/aspect-ratio-landscape",
-              label: "Querformat",
+              label: __("Landscape"),
             },
-            square: { icon: "divi/aspect-ratio-square", label: "Quadratisch" },
+            square: { icon: "divi/aspect-ratio-square", label: __("Square") },
             portrait: {
               icon: "divi/aspect-ratio-portrait",
-              label: "Hochformat",
+              label: __("Portrait"),
             },
           },
           showLabel: false,
@@ -204,16 +207,16 @@
     size: field(
       "size",
       50,
-      "Größe",
+      __("Size"),
       "",
       {
         name: "divi/select",
         props: {
           options: {
-            stretch: { label: "Strecken" },
-            cover: { label: "Füllen" },
-            contain: { label: "Einpassen" },
-            custom: { label: "Eigene Größe" },
+            stretch: { label: __("Stretch to Fill") },
+            cover: { label: __("Cover") },
+            contain: { label: __("Fit") },
+            custom: { label: __("Custom Size") },
           },
         },
       },
@@ -223,7 +226,7 @@
     width: field(
       "width",
       60,
-      "Breite",
+      __("Width"),
       "",
       { name: "divi/range", props: percentRange(0) },
       (mask) => hasMask(mask) && mask.size === "custom",
@@ -231,7 +234,7 @@
     height: field(
       "height",
       70,
-      "Höhe",
+      __("Height"),
       "",
       { name: "divi/range", props: percentRange(0) },
       (mask) => hasMask(mask) && mask.size === "custom",
@@ -239,21 +242,21 @@
     position: field(
       "position",
       80,
-      "Position",
+      __("Position"),
       "",
       {
         name: "divi/select",
         props: {
           options: {
-            center: { label: "Mitte" },
-            "top left": { label: "Oben links" },
-            top: { label: "Oben" },
-            "top right": { label: "Oben rechts" },
-            right: { label: "Rechts" },
-            "bottom right": { label: "Unten rechts" },
-            bottom: { label: "Unten" },
-            "bottom left": { label: "Unten links" },
-            left: { label: "Links" },
+            center: { label: __("Center") },
+            "top left": { label: __("Top Left") },
+            top: { label: __("Top") },
+            "top right": { label: __("Top Right") },
+            right: { label: __("Right") },
+            "bottom right": { label: __("Bottom Right") },
+            bottom: { label: __("Bottom") },
+            "bottom left": { label: __("Bottom Left") },
+            left: { label: __("Left") },
           },
         },
       },
@@ -263,7 +266,7 @@
     horizontalOffset: field(
       "horizontalOffset",
       90,
-      "Horizontaler Versatz",
+      __("Horizontal Offset"),
       "",
       { name: "divi/range", props: percentRange(-100) },
       isPlaced,
@@ -271,7 +274,7 @@
     verticalOffset: field(
       "verticalOffset",
       100,
-      "Vertikaler Versatz",
+      __("Vertical Offset"),
       "",
       { name: "divi/range", props: percentRange(-100) },
       isPlaced,
@@ -307,7 +310,7 @@
         groupName: GROUP,
         component: {
           name: "divi/composite",
-          props: { groupLabel: "Bildmaske" },
+          props: { groupLabel: __("Image Mask") },
         },
       },
     }),

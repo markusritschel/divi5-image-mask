@@ -1,13 +1,14 @@
 <?php
 /**
  * Plugin Name:       Image Mask for Divi 5
- * Description:       Eine „Bildmaske“ für das Bild-Modul des Divi 5 Visual Builders: das Bild in eine von Divis Maskenformen oder eine eigene SVG-Maske schneiden.
+ * Description:       An image mask for the Image module of the Divi 5 Visual Builder: cut the image into one of Divi's mask shapes or into a custom SVG mask.
  * Version:           0.1.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Markus Ritschel
  * License:           GPL-2.0-or-later
  * Text Domain:       divi5-image-mask
+ * Domain Path:       /languages
  * Plugin URI:        https://github.com/markusritschel/divi5-image-mask
  * Update URI:        https://github.com/markusritschel/divi5-image-mask
  *
@@ -52,7 +53,60 @@ function d5im_register_updater() {
 d5im_register_updater();
 
 /**
- * Loads the builder script (assets/image-mask.js) into the Visual Builder's app window: the "Bildmaske" group on
+ * Loads the plugin's translations (languages/, German included).
+ */
+function d5im_load_textdomain() {
+	load_plugin_textdomain( 'divi5-image-mask', false, dirname( plugin_basename( D5IM_FILE ) ) . '/languages' );
+}
+add_action( 'init', 'd5im_load_textdomain' );
+
+/**
+ * The builder script's texts, English => translated. The script shows them through its __(), by English text.
+ *
+ * Translated here rather than with wp.i18n in the script: one .mo file for everything, no JSON translation files.
+ * Each text is spelled out so that gettext tools (wp i18n make-pot) find it; e2e/tests/strings.mjs checks that the
+ * script uses no text missing here.
+ */
+function d5im_builder_texts(): array {
+	return array(
+		'Image Mask'        => __( 'Image Mask', 'divi5-image-mask' ),
+		'Mask Shape'        => __( 'Mask Shape', 'divi5-image-mask' ),
+		'One of Divi\'s mask shapes. The image stays visible where a Divi background would show through the same mask.' => __( 'One of Divi\'s mask shapes. The image stays visible where a Divi background would show through the same mask.', 'divi5-image-mask' ),
+		'Custom Mask'       => __( 'Custom Mask', 'divi5-image-mask' ),
+		'An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque.' => __( 'An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque.', 'divi5-image-mask' ),
+		'Transform'         => __( 'Transform', 'divi5-image-mask' ),
+		'Flip Horizontal'   => __( 'Flip Horizontal', 'divi5-image-mask' ),
+		'Flip Vertical'     => __( 'Flip Vertical', 'divi5-image-mask' ),
+		'Rotate 90°'        => __( 'Rotate 90°', 'divi5-image-mask' ),
+		'Invert'            => __( 'Invert', 'divi5-image-mask' ),
+		'Aspect Ratio'      => __( 'Aspect Ratio', 'divi5-image-mask' ),
+		'Landscape'         => __( 'Landscape', 'divi5-image-mask' ),
+		'Square'            => __( 'Square', 'divi5-image-mask' ),
+		'Portrait'          => __( 'Portrait', 'divi5-image-mask' ),
+		'Size'              => __( 'Size', 'divi5-image-mask' ),
+		'Stretch to Fill'   => __( 'Stretch to Fill', 'divi5-image-mask' ),
+		'Cover'             => __( 'Cover', 'divi5-image-mask' ),
+		'Fit'               => __( 'Fit', 'divi5-image-mask' ),
+		'Custom Size'       => __( 'Custom Size', 'divi5-image-mask' ),
+		'Width'             => __( 'Width', 'divi5-image-mask' ),
+		'Height'            => __( 'Height', 'divi5-image-mask' ),
+		'Position'          => __( 'Position', 'divi5-image-mask' ),
+		'Center'            => __( 'Center', 'divi5-image-mask' ),
+		'Top Left'          => __( 'Top Left', 'divi5-image-mask' ),
+		'Top'               => __( 'Top', 'divi5-image-mask' ),
+		'Top Right'         => __( 'Top Right', 'divi5-image-mask' ),
+		'Right'             => __( 'Right', 'divi5-image-mask' ),
+		'Bottom Right'      => __( 'Bottom Right', 'divi5-image-mask' ),
+		'Bottom'            => __( 'Bottom', 'divi5-image-mask' ),
+		'Bottom Left'       => __( 'Bottom Left', 'divi5-image-mask' ),
+		'Left'              => __( 'Left', 'divi5-image-mask' ),
+		'Horizontal Offset' => __( 'Horizontal Offset', 'divi5-image-mask' ),
+		'Vertical Offset'   => __( 'Vertical Offset', 'divi5-image-mask' ),
+	);
+}
+
+/**
+ * Loads the builder script (assets/image-mask.js) into the Visual Builder's app window: the "Image Mask" group on
  * the Image module and its live preview.
  */
 function d5im_enqueue_visual_builder_assets() {
@@ -70,6 +124,8 @@ function d5im_enqueue_visual_builder_assets() {
 				'deps'               => array( 'divi-module-library', 'divi-vendor-wp-hooks' ),
 				'enqueue_top_window' => false,
 				'enqueue_app_window' => true,
+				// Global Divi5ImageMaskData in the app window.
+				'data_app_window'    => array( 'texts' => d5im_builder_texts() ),
 			),
 		)
 	);

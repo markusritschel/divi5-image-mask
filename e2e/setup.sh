@@ -16,6 +16,8 @@ wp() { docker compose run --rm -T cli wp "$@"; }
 wp core is-installed 2>/dev/null || wp core install --url="$URL" --title=D5IM --admin_user=admin --admin_password=admin --admin_email=e2e@example.com --skip-email
 wp rewrite structure '/%postname%/'
 wp plugin activate divi5-image-mask
+# WordPress's German files, for the German builder test: without them WordPress refuses de_DE as site language.
+wp language core is-installed de_DE || wp language core install de_DE
 # An author for the upload test: may upload images, but has no unfiltered_html.
 wp user get author >/dev/null 2>&1 || wp user create author author@example.com --role=author --user_pass=author
 if [ -f "$DIVI_ZIP" ]; then

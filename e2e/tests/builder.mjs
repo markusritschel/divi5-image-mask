@@ -32,12 +32,12 @@ const previewRules = (app, count) =>
 
 const moduleIdOf = (app) => app.evaluate(() => document.querySelector('.et_pb_image').className.match(/et_pb_image_([0-9a-f-]{36})/)[1]);
 
-/** Opens the module's settings on the Design tab with the "Bildmaske" group expanded. */
-async function openMaskGroup(page, app, moduleId) {
+/** Opens the module's settings on the Design tab with the mask group (labelled `group`) expanded. */
+async function openMaskGroup(page, app, moduleId, group = 'Image Mask') {
   await app.evaluate((id) => window.divi.data.dispatch('divi/modal-library').open({ owner: id, name: 'divi/module' }), moduleId);
   await page.getByText('Design', { exact: true }).first().click();
   if (!(await page.locator('.et-vb-field-image-advanced-mask-style').count())) {
-    await page.getByText('Bildmaske', { exact: true }).first().click();
+    await page.getByText(group, { exact: true }).first().click();
   }
   await page.locator('.et-vb-field-image-advanced-mask-style').waitFor();
 }
@@ -54,7 +54,7 @@ test('the builder preview clips each image like the page', async (t) => {
   assert.deepEqual(errors, []);
 });
 
-test('the Bildmaske fields store the mask, the preview follows, and the saved page keeps it', async (t) => {
+test('the Image Mask fields store the mask, the preview follows, and the saved page keeps it', async (t) => {
   if (!diviActive()) return t.skip(SKIP);
   const { id, url } = php('mask-page', JSON.stringify([null]));
   t.after(() => wp('post', 'delete', id, '--force'));
@@ -113,5 +113,30 @@ test('a custom mask offers only Invert, a shape all four transforms', async (t) 
   await setCustom('');
   await page.waitForTimeout(500);
   assert.deepEqual(await buttons(), ['flipHorizontal', 'flipVertical', 'rotate', 'invert']);
+  assert.deepEqual(errors, []);
+});
+
+test('on a German site the mask group is German', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  // Needs WordPress's German files (setup.sh installs them): WordPress keeps the old language otherwise.
+  wp('option', 'update', 'WPLANG', 'de_DE');
+  assert.equal(wp('option', 'get', 'WPLANG'), 'de_DE', 'German not installed: run e2e/setup.sh again');
+  t.after(() => wp('option', 'update', 'WPLANG', ''));
+  // A shape with a custom size: every field is shown.
+  const { id } = php('mask-page', JSON.stringify([{ style: 'arch', size: 'custom', position: 'top left' }]));
+  t.after(() => wp('post', 'delete', id, '--force'));
+  const { page, app, errors } = await openBuilder(t, id);
+  await openMaskGroup(page, app, await moduleIdOf(app), 'Bildmaske');
+
+  const labels = await page.locator('[class*="et-vb-field-image-advanced-mask-"] .et-vb-field-label label').allTextContents();
+  // Divi title-cases labels: compared without case.
+  assert.deepEqual(
+    labels.map((label) => label.trim().toLowerCase()),
+    ['Maskenform', 'Eigene Maske', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz'].map((label) => label.toLowerCase()),
+  );
+  // Divi lists a select's options only while it is open.
+  await page.locator('.et-vb-field-image-advanced-mask-size li.et-vb-selected-item').click();
+  const sizes = await page.locator('.et-vb-field-image-advanced-mask-size li[data-value]').allTextContents();
+  assert.deepEqual(sizes.map((size) => size.trim()), ['Strecken', 'Füllen', 'Einpassen', 'Eigene Größe']);
   assert.deepEqual(errors, []);
 });
