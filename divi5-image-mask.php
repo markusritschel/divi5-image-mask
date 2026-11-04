@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Image Mask for Divi 5
  * Description:       An image mask for the Image module of the Divi 5 Visual Builder: cut the image into one of Divi's mask shapes or into a custom SVG mask.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Markus Ritschel
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'D5IM_VERSION', '0.1.0' );
+define( 'D5IM_VERSION', '0.2.0' );
 define( 'D5IM_FILE', __FILE__ );
 
 // Composer dependencies (Plugin Update Checker); absent in a plain git checkout.
