@@ -26,6 +26,8 @@ Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 
 The Visual Builder shows the mask live and plays the zoom again whenever you change a mask setting. The mask applies to the whole image frame, so a hover overlay or border set on the image is cut along with it, and a box shadow (drawn outside the frame) disappears.
 
+**Opacity and blend mode of the whole image** are Divi's own settings, under **Design › Filters** (Opacity, Blend); they work on the masked image, inside the shape. Note that Divi's Blend only mixes with what lies inside the same column, such as the column's background colour: Divi columns are a layer of their own, so the section or page behind them doesn't take part (with or without a mask).
+
 **SVG uploads**: WordPress refuses SVG files by default. With this plugin active, users who may post unfiltered HTML (administrators) can upload SVGs; other roles can't. PNG or WebP masks with transparency work for everyone.
 
 ## Languages
