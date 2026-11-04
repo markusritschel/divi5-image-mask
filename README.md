@@ -1,4 +1,11 @@
-# Image Mask for Divi 5
+<h1 align="center">Image Mask for Divi 5</h1>
+
+<p align="center">
+  <a href="https://github.com/markusritschel/divi5-image-mask/actions/workflows/release.yml"><img src="https://github.com/markusritschel/divi5-image-mask/actions/workflows/release.yml/badge.svg" alt="Release workflow status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--2.0--or--later-blue" alt="License: GPL-2.0-or-later" /></a>
+</p>
+
+---
 
 Small WordPress plugin that adds an **Image Mask** group to the Divi 5 Image module: cut the image into one of Divi's mask shapes (the same ones as **Background > Mask**) or into a mask you upload yourself.
 
