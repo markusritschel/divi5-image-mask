@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE, wp, php, diviActive, launch, login, pageHtml, colorsAt, isRed } from '../lib.mjs';
-import { CASES, assertClipped } from '../cases.mjs';
+import { CASES, assertClipped, isFaint } from '../cases.mjs';
 
 const SKIP = 'Divi not installed (e2e/setup.sh /path/to/Divi.zip)';
 
@@ -51,7 +51,8 @@ test('the builder preview clips each image like the page', async (t) => {
   const { id } = php('mask-page', JSON.stringify(CASES.map((c) => c.mask)));
   t.after(() => wp('post', 'delete', id, '--force'));
   const { page, app, errors } = await openBuilder(t, id);
-  await previewRules(app, CASES.filter((c) => c.hidden.length).length);
+  // A rule per masked case: one with points hidden or faint.
+  await previewRules(app, CASES.filter((c) => c.hidden.length || c.faint?.length).length);
   await page.mouse.move(1000, 24); // Off the canvas: no hover outlines on the modules.
 
   await assertClipped(page, app.locator('.et_pb_image .et_pb_image_wrap'));
@@ -83,6 +84,15 @@ test('the Image Mask fields store the mask, the preview follows, and the saved p
   const preview = await colorsAt(page, app.locator('.et_pb_image_wrap').first(), [left, right]);
   assert.ok(isRed(preview[0]) && !isRed(preview[1]), `preview: ${preview}`);
 
+  // Outside Opacity, typed into its field (Divi's classes are kebab-case): the hidden side shows faintly.
+  const outside = page.locator('.et-vb-field-image-advanced-mask-outside-opacity input:not([type="range"])').first();
+  await outside.fill('30');
+  await outside.press('Enter');
+  await app.waitForFunction((id) => window.divi.data.select('divi/edit-post').getModuleAttr(id, 'image.advanced.mask')?.desktop?.value?.outsideOpacity === '30%', moduleId, { timeout: 5000 });
+  await page.waitForTimeout(500); // Deliberate: lets the preview repaint.
+  const faintPreview = await colorsAt(page, app.locator('.et_pb_image_wrap').first(), [left, right]);
+  assert.ok(isRed(faintPreview[0]) && isFaint(faintPreview[1]), `preview with outside opacity: ${faintPreview}`);
+
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   const deadline = Date.now() + 30000;
   while (!(await pageHtml(url)).includes('mask-image') && Date.now() < deadline) await page.waitForTimeout(1000);
@@ -90,7 +100,7 @@ test('the Image Mask fields store the mask, the preview follows, and the saved p
   t.after(() => visitor.close());
   await visitor.goto(url);
   const saved = await colorsAt(visitor, visitor.locator('.et_pb_image_wrap').first(), [left, right]);
-  assert.ok(isRed(saved[0]) && !isRed(saved[1]), `page: ${saved}`);
+  assert.ok(isRed(saved[0]) && isFaint(saved[1]), `page: ${saved}`);
   assert.deepEqual(errors, []);
 });
 
@@ -228,6 +238,7 @@ test('on a German site the mask group is German', async (t) => {
     [
       // No "Eigene Maske": the picker only shows with the shape "Eigene".
       'Maskenform', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz',
+      'Deckkraft außerhalb',
       'Animation', 'Start der Animation', 'Animationsdauer', 'Animationsverzögerung', 'Animationskurve',
       'Richtung der Animation', 'Anzahl der Durchläufe', 'Endlos wiederholen',
     ].map((label) => label.toLowerCase()),

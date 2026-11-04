@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Image Mask for Divi 5 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/markusritschel/divi5-image-mask/"
 "issues\n"
-"POT-Creation-Date: 2026-11-04T09:28:59+00:00\n"
+"POT-Creation-Date: 2026-11-04T09:43:39+00:00\n"
 "PO-Revision-Date: 2026-11-03 20:30+0100\n"
 "Last-Translator: Markus Ritschel\n"
 "Language-Team: German\n"
@@ -184,10 +184,22 @@ msgid "Vertical Offset"
 msgstr "Vertikaler Versatz"
 
 #: divi5-image-mask.php:106
+msgid "Outside Opacity"
+msgstr "Deckkraft außerhalb"
+
+#: divi5-image-mask.php:107
+msgid ""
+"How much of the image shows outside the shape: 0 % hides it, 100 % shows it "
+"fully. For the whole image use Filters › Opacity."
+msgstr ""
+"Wie stark das Bild außerhalb der Form sichtbar ist: 0 % blendet es aus, 100 "
+"% zeigt es ganz. Für das ganze Bild: Filter › Deckkraft."
+
+#: divi5-image-mask.php:108
 msgid "Animation"
 msgstr "Animation"
 
-#: divi5-image-mask.php:107
+#: divi5-image-mask.php:109
 msgid ""
 "Zoom In opens the mask from nothing, Zoom Out shrinks it from three times "
 "its size onto the shape, both around its position. Available with Stretch to "
@@ -197,67 +209,67 @@ msgstr ""
 "dreifacher Größe auf die Form zusammen, beide um ihre Position. Verfügbar "
 "bei „Strecken“ und „Eigene Größe“."
 
-#: divi5-image-mask.php:108
+#: divi5-image-mask.php:110
 msgid "None"
 msgstr "Keine"
 
-#: divi5-image-mask.php:109
+#: divi5-image-mask.php:111
 msgid "Zoom In"
 msgstr "Einzoomen"
 
-#: divi5-image-mask.php:110
+#: divi5-image-mask.php:112
 msgid "Zoom Out"
 msgstr "Auszoomen"
 
-#: divi5-image-mask.php:111
+#: divi5-image-mask.php:113
 msgid "Animation Start"
 msgstr "Start der Animation"
 
-#: divi5-image-mask.php:112
+#: divi5-image-mask.php:114
 msgid "On Page Load"
 msgstr "Beim Laden der Seite"
 
-#: divi5-image-mask.php:113
+#: divi5-image-mask.php:115
 msgid "When Scrolled Into View"
 msgstr "Beim Hineinscrollen"
 
-#: divi5-image-mask.php:114
+#: divi5-image-mask.php:116
 msgid "Animation Duration"
 msgstr "Animationsdauer"
 
-#: divi5-image-mask.php:115
+#: divi5-image-mask.php:117
 msgid "Animation Delay"
 msgstr "Animationsverzögerung"
 
-#: divi5-image-mask.php:116
+#: divi5-image-mask.php:118
 msgid "Animation Speed Curve"
 msgstr "Animationskurve"
 
-#: divi5-image-mask.php:117
+#: divi5-image-mask.php:119
 msgid "Ease"
 msgstr "Ease"
 
-#: divi5-image-mask.php:118
+#: divi5-image-mask.php:120
 msgid "Ease-In-Out"
 msgstr "Ease-In-Out"
 
-#: divi5-image-mask.php:119
+#: divi5-image-mask.php:121
 msgid "Ease-In"
 msgstr "Ease-In"
 
-#: divi5-image-mask.php:120
+#: divi5-image-mask.php:122
 msgid "Ease-Out"
 msgstr "Ease-Out"
 
-#: divi5-image-mask.php:121
+#: divi5-image-mask.php:123
 msgid "Linear"
 msgstr "Linear"
 
-#: divi5-image-mask.php:122
+#: divi5-image-mask.php:124
 msgid "Animation Direction"
 msgstr "Richtung der Animation"
 
-#: divi5-image-mask.php:123
+#: divi5-image-mask.php:125
 msgid ""
 "Alternate plays every second run backwards. With an even number of plays the "
 "animation ends where it started."
@@ -265,27 +277,27 @@ msgstr ""
 "„Abwechselnd“ spielt jeden zweiten Durchlauf rückwärts. Bei einer geraden "
 "Anzahl von Durchläufen endet die Animation dort, wo sie begonnen hat."
 
-#: divi5-image-mask.php:124
+#: divi5-image-mask.php:126
 msgid "Normal"
 msgstr "Normal"
 
-#: divi5-image-mask.php:125
+#: divi5-image-mask.php:127
 msgid "Alternate"
 msgstr "Abwechselnd"
 
-#: divi5-image-mask.php:126
+#: divi5-image-mask.php:128
 msgid "Number of Plays"
 msgstr "Anzahl der Durchläufe"
 
-#: divi5-image-mask.php:127
+#: divi5-image-mask.php:129
 msgid "Loop Endlessly"
 msgstr "Endlos wiederholen"
 
-#: divi5-image-mask.php:128
+#: divi5-image-mask.php:130
 msgid "Replay When Scrolled Back Into View"
 msgstr "Beim erneuten Hineinscrollen wiederholen"
 
-#: divi5-image-mask.php:129
+#: divi5-image-mask.php:131
 msgid ""
 "Once the image has left the window completely, the mask returns to its start "
 "and plays again on the way back."

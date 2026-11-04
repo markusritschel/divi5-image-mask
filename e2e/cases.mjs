@@ -41,16 +41,30 @@ export const CASES = [
   // An uploaded image only counts while "Custom" is the shape.
   { name: 'a shape ignores a stored custom image', mask: { style: 'arch', custom: { src: circle } }, shown: [right], hidden: [left] },
   { name: 'custom without an image', mask: { style: 'custom' }, shown: [center, corner], hidden: [] },
+  // Outside Opacity: the image shows faintly outside the shape (in an inverted custom mask: in the hole).
+  { name: 'ellipse, 30 % outside', mask: { style: 'ellipse', outsideOpacity: '30%' }, shown: [center], hidden: [], faint: [corner] },
+  {
+    name: 'custom circle inverted, 30 % outside',
+    mask: { style: 'custom', custom: { src: circle }, transform: ['invert'], outsideOpacity: '30%' },
+    shown: [corner], hidden: [], faint: [center],
+  },
 ];
+
+/** Red at reduced opacity over the white page: red stays high, green and blue sit in between. */
+export const isFaint = ([r, g, b]) => r > 200 && g > 100 && g < 235 && Math.abs(g - b) < 25;
 
 /** Asserts that the n-th of `wraps` (.et_pb_image_wrap locators, one per case) is clipped as CASES[n] says. */
 export async function assertClipped(page, wraps) {
   assert.equal(await wraps.count(), CASES.length);
-  for (const [i, { name, shown, hidden }] of CASES.entries()) {
+  for (const [i, { name, shown, hidden, faint = [] }] of CASES.entries()) {
     const wrap = wraps.nth(i);
     await wrap.scrollIntoViewIfNeeded();
-    const colors = await colorsAt(page, wrap, [...shown, ...hidden]);
+    const colors = await colorsAt(page, wrap, [...shown, ...hidden, ...faint]);
     shown.forEach((point, j) => assert.ok(isRed(colors[j]), `${name}: image hidden at ${point} (${colors[j]})`));
     hidden.forEach((point, j) => assert.ok(!isRed(colors[shown.length + j]), `${name}: image visible at ${point}`));
+    faint.forEach((point, j) => {
+      const color = colors[shown.length + hidden.length + j];
+      assert.ok(isFaint(color), `${name}: not faint at ${point} (${color})`);
+    });
   }
 }

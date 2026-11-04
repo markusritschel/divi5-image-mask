@@ -87,16 +87,35 @@
     const positions = [
       `${x ? `${x} ${length(mask.horizontalOffset, "0%")}` : "left 50%"} ${y ? `${y} ${length(mask.verticalOffset, "0%")}` : "top 50%"}`,
     ];
-    let composite = "";
+    const sizes = maskSizes(mask);
+    let composites = ["add"];
 
     // Inverting a custom mask: subtract it from a full layer, at the mask's position (see the PHP).
     if (custom && invert) {
       layers.push("linear-gradient(#000 0 0)");
       positions.push(positions[0]);
-      composite = "mask-composite:exclude;";
+      composites = ["exclude"];
     }
 
-    return `mask-image:${layers.join(",")};mask-size:${maskSizes(mask).join(",")};mask-position:${positions.join(",")};mask-repeat:no-repeat;${composite}`;
+    // Outside Opacity: a translucent full layer on top, which never zooms (see the PHP).
+    const alpha = outsideAlpha(mask);
+    if (alpha > 0) {
+      layers.unshift(`linear-gradient(rgb(0 0 0/${alpha}) 0 0)`);
+      sizes.unshift("100% 100%");
+      positions.unshift("0 0");
+      composites.unshift("add");
+    }
+    const composite = composites.every((c) => c === "add")
+      ? ""
+      : `mask-composite:${composites.join(",")};`;
+
+    return `mask-image:${layers.join(",")};mask-size:${sizes.join(",")};mask-position:${positions.join(",")};mask-repeat:no-repeat;${composite}`;
+  };
+
+  // Same as d5im_outside_alpha() in divi5-image-mask.php: "30%" → 0.3.
+  const outsideAlpha = (mask) => {
+    const value = parseFloat(String(mask.outsideOpacity ?? "").replace("%", ""));
+    return Number.isFinite(value) ? Math.round(Math.min(100, Math.max(0, value))) / 100 : 0;
   };
 
   // Same output as d5im_mask_sizes() in divi5-image-mask.php.
@@ -142,13 +161,16 @@
         ? "infinite"
         : String(Math.min(10, Math.max(1, parseInt(mask.animationPlays ?? 1, 10) || 1)));
     const direction = mask.animationDirection === "alternate" ? "alternate" : "normal";
-    const start =
+    // One start size per layer: the Outside Opacity layer stays full.
+    const start = maskSizes(mask).map((size) =>
       mask.animation === "zoom"
         ? "0 0"
-        : maskSizes(mask)
-            .map((size) => size.split(" ").map((value) => `calc(${value} * 3)`).join(" "))
-            .join(",");
-    return `--d5im-start:${start};--d5im-animation:d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")} ${plays} ${direction} both;`;
+        : size.split(" ").map((value) => `calc(${value} * 3)`).join(" "),
+    );
+    if (outsideAlpha(mask) > 0) {
+      start.unshift("100% 100%");
+    }
+    return `--d5im-start:${start.join(",")};--d5im-animation:d5im-zoom ${time(mask.animationDuration, "500ms")} ${easing} ${time(mask.animationDelay, "0ms")} ${plays} ${direction} both;`;
   };
 
   // Divi's Background > Mask fields, without colour and blend mode (meaningless for a clip). One value for all
@@ -386,6 +408,16 @@
       "",
       { name: "divi/range", props: percentRange(-100) },
       isPlaced,
+    ),
+    // The image's own opacity and blend mode are Divi's (Design › Filters); this one is the mask's.
+    outsideOpacity: field(
+      "outsideOpacity",
+      105,
+      __("Outside Opacity"),
+      __("How much of the image shows outside the shape: 0 % hides it, 100 % shows it fully. For the whole image use Filters › Opacity."),
+      { name: "divi/range", props: percentRange(0) },
+      hasMask,
+      { defaultAttr: { desktop: { value: { outsideOpacity: "0%" } } } },
     ),
     // The zoom animation, with fields like Divi's own animation group (Advanced > Animation).
     animation: field(

@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE, wp, php, diviActive, launch, pageHtml, colorsAt, isRed } from '../lib.mjs';
+import { isFaint } from '../cases.mjs';
 
 const SKIP = 'Divi not installed (e2e/setup.sh /path/to/Divi.zip)';
 const circle = `${BASE}/wp-content/uploads/d5im-circle.svg`;
@@ -188,5 +189,25 @@ test('Zoom Out shrinks the mask from three times its size onto the shape', async
   assert.ok(isRed(visible) && !isRed(masked), `end: ${visible} / ${masked}`);
 
   assert.equal(await maskSize(wraps(page).nth(2)), '300% 300%');
+  assert.deepEqual(errors, []);
+});
+
+test('with Outside Opacity only the shape zooms: the faint rest stays', async (t) => {
+  if (!diviActive()) return t.skip(SKIP);
+  // Also an inverted custom mask: its full layer zooms with the shape, the faint layer doesn't.
+  const { page, errors } = await openPage(t, [
+    { style: 'ellipse', outsideOpacity: '30%', ...onLoad },
+    { style: 'custom', custom: { src: circle }, transform: ['invert'], outsideOpacity: '30%', ...onLoad },
+  ]);
+  for (const [i, [shown, faint]] of [[center, corner], [corner, center]].entries()) {
+    const wrap = wraps(page).nth(i);
+    await wrap.scrollIntoViewIfNeeded();
+    await seek(wrap, 0);
+    const start = await colorsAt(page, wrap, [center, corner]);
+    assert.ok(start.every(isFaint), `${i} start: all faint: ${start}`);
+    await seek(wrap, 1);
+    const [full, rest] = await colorsAt(page, wrap, [shown, faint]);
+    assert.ok(isRed(full) && isFaint(rest), `${i} end: ${full} / ${rest}`);
+  }
   assert.deepEqual(errors, []);
 });

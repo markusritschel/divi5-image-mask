@@ -13,6 +13,7 @@ Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 | Transform (Transformation)      | Flip horizontally / vertically, rotate by 90°, invert. A custom mask can only be inverted.                                            |
 | Aspect Ratio (Seitenverhältnis) | Landscape, square or portrait version of Divi's shape (like Divi's mask aspect ratio).                                                |
 | Size (Größe)                    | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |
+| Outside Opacity (Deckkraft außerhalb) | How much of the image shows outside the shape: 0 % (default) hides it, e.g. 20 % leaves it faintly visible, a spotlight effect. With an inverted custom mask it applies to the hole. In an animation only the shape zooms; the faint rest stays. |
 | Animation                       | Zoom In (Einzoomen): the mask grows from nothing to its size. Zoom Out (Auszoomen): it shrinks from three times its size onto the shape. Both around the mask's position, while the image stays still. With Stretch or a custom size. |
 
 **Animation** settings, once Zoom In or Zoom Out is chosen:

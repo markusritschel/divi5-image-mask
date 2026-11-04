@@ -103,6 +103,8 @@ function d5im_builder_texts(): array {
 		'Left'              => __( 'Left', 'divi5-image-mask' ),
 		'Horizontal Offset' => __( 'Horizontal Offset', 'divi5-image-mask' ),
 		'Vertical Offset'   => __( 'Vertical Offset', 'divi5-image-mask' ),
+		'Outside Opacity'   => __( 'Outside Opacity', 'divi5-image-mask' ),
+		'How much of the image shows outside the shape: 0 % hides it, 100 % shows it fully. For the whole image use Filters › Opacity.' => __( 'How much of the image shows outside the shape: 0 % hides it, 100 % shows it fully. For the whole image use Filters › Opacity.', 'divi5-image-mask' ),
 		'Animation'         => __( 'Animation', 'divi5-image-mask' ),
 		'Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size.' => __( 'Zoom In opens the mask from nothing, Zoom Out shrinks it from three times its size onto the shape, both around its position. Available with Stretch to Fill and Custom Size.', 'divi5-image-mask' ),
 		'None'              => __( 'None', 'divi5-image-mask' ),
@@ -243,15 +245,39 @@ function d5im_mask_css( array $mask ): string {
 	$positions  = array( "$x $y" );
 	$composite  = '';
 
+	$sizes      = d5im_mask_sizes( $mask );
+	$composites = array( 'add' );
+
 	// Inverting a custom mask: subtract it from a full layer (its size: d5im_mask_sizes()). That layer sits at the
 	// mask's position, so the zoom animation scales both layers from the same point.
 	if ( '' !== $custom && $invert ) {
 		$layers[]    = 'linear-gradient(#000 0 0)';
 		$positions[] = "$x $y";
-		$composite   = 'mask-composite:exclude;';
+		$composites  = array( 'exclude' );
 	}
 
-	return 'mask-image:' . implode( ',', $layers ) . ';mask-size:' . implode( ',', d5im_mask_sizes( $mask ) ) . ';mask-position:' . implode( ',', $positions ) . ';mask-repeat:no-repeat;' . $composite;
+	// Outside Opacity: a translucent full layer on top, added to the shape (after an inverted mask has cut its
+	// hole, so the hole gets it too). It never zooms: d5im_animation_css() keeps it at full size.
+	$alpha = d5im_outside_alpha( $mask );
+	if ( $alpha > 0 ) {
+		array_unshift( $layers, 'linear-gradient(rgb(0 0 0/' . $alpha . ') 0 0)' );
+		array_unshift( $sizes, '100% 100%' );
+		array_unshift( $positions, '0 0' );
+		array_unshift( $composites, 'add' );
+	}
+	$composite = array( 'add' ) === array_unique( $composites ) ? '' : 'mask-composite:' . implode( ',', $composites ) . ';';
+
+	return 'mask-image:' . implode( ',', $layers ) . ';mask-size:' . implode( ',', $sizes ) . ';mask-position:' . implode( ',', $positions ) . ';mask-repeat:no-repeat;' . $composite;
+}
+
+/**
+ * Outside Opacity as an alpha between 0 and 1, rounded to two decimals (0: the image is hidden outside the shape).
+ *
+ * @param array $mask The module's image.advanced.mask value (outsideOpacity, e.g. "30%").
+ */
+function d5im_outside_alpha( array $mask ): float {
+	$value = rtrim( trim( (string) ( $mask['outsideOpacity'] ?? '' ) ), '%' );
+	return is_numeric( $value ) ? round( max( 0, min( 100, (float) $value ) ) / 100, 2 ) : 0.0;
 }
 
 /**
@@ -295,9 +321,15 @@ function d5im_animation_css( array $mask ): string {
 	$easing    = in_array( $mask['animationEasing'] ?? '', array( 'ease-in-out', 'ease-in', 'ease-out', 'linear' ), true ) ? $mask['animationEasing'] : 'ease';
 	$plays     = 'on' === ( $mask['animationLoop'] ?? 'off' ) ? 'infinite' : (string) min( 10, max( 1, (int) ( $mask['animationPlays'] ?? 1 ) ) );
 	$direction = 'alternate' === ( $mask['animationDirection'] ?? '' ) ? 'alternate' : 'normal';
-	$start     = 'zoom' === $animation
-		? '0 0'
-		: implode( ',', array_map( fn( $size ) => implode( ' ', array_map( fn( $value ) => "calc($value * 3)", explode( ' ', $size ) ) ), d5im_mask_sizes( $mask ) ) );
+	// One start size per layer (as in d5im_mask_css()): the Outside Opacity layer stays full.
+	$start = array_map(
+		fn( $size ) => 'zoom' === $animation ? '0 0' : implode( ' ', array_map( fn( $value ) => "calc($value * 3)", explode( ' ', $size ) ) ),
+		d5im_mask_sizes( $mask )
+	);
+	if ( d5im_outside_alpha( $mask ) > 0 ) {
+		array_unshift( $start, '100% 100%' );
+	}
+	$start = implode( ',', $start );
 	return sprintf(
 		'--d5im-start:%s;--d5im-animation:d5im-zoom %s %s %s %s %s both;',
 		$start,
