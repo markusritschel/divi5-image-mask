@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Image Mask for Divi 5 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/markusritschel/divi5-image-mask/"
 "issues\n"
-"POT-Creation-Date: 2026-11-03T21:01:52+00:00\n"
+"POT-Creation-Date: 2026-11-04T09:28:59+00:00\n"
 "PO-Revision-Date: 2026-11-03 20:30+0100\n"
 "Last-Translator: Markus Ritschel\n"
 "Language-Team: German\n"
@@ -51,141 +51,143 @@ msgstr "Maskenform"
 
 #: divi5-image-mask.php:74
 msgid ""
-"One of Divi's mask shapes. The image stays visible where a Divi background "
-"would show through the same mask."
+"One of Divi's mask shapes, or Custom for an image of your own. With a Divi "
+"shape the image stays visible where a Divi background would show through the "
+"same mask."
 msgstr ""
-"Eine von Divis Maskenformen. Das Bild bleibt sichtbar, wo ein Divi-"
-"Hintergrund durch dieselbe Maske scheint."
+"Eine von Divis Maskenformen oder „Eigene“ für ein eigenes Bild. Bei einer "
+"Divi-Form bleibt das Bild sichtbar, wo ein Divi-Hintergrund durch dieselbe "
+"Maske scheint."
 
 #: divi5-image-mask.php:75
+msgid "Custom"
+msgstr "Eigene"
+
+#: divi5-image-mask.php:76
 msgid "Custom Mask"
 msgstr "Eigene Maske"
 
-#: divi5-image-mask.php:76
-msgid ""
-"An SVG or PNG instead of the mask shape. The image stays visible where the "
-"mask is opaque."
-msgstr ""
-"Ein SVG oder PNG statt der Maskenform. Das Bild bleibt sichtbar, wo die "
-"Maske deckend ist."
-
 #: divi5-image-mask.php:77
+msgid "An SVG or PNG. The image stays visible where the mask is opaque."
+msgstr "Ein SVG oder PNG. Das Bild bleibt sichtbar, wo die Maske deckend ist."
+
+#: divi5-image-mask.php:78
 msgid "Transform"
 msgstr "Transformation"
 
-#: divi5-image-mask.php:78
+#: divi5-image-mask.php:79
 msgid "Flip Horizontal"
 msgstr "Horizontal spiegeln"
 
-#: divi5-image-mask.php:79
+#: divi5-image-mask.php:80
 msgid "Flip Vertical"
 msgstr "Vertikal spiegeln"
 
-#: divi5-image-mask.php:80
+#: divi5-image-mask.php:81
 msgid "Rotate 90°"
 msgstr "Um 90° drehen"
 
-#: divi5-image-mask.php:81
+#: divi5-image-mask.php:82
 msgid "Invert"
 msgstr "Umkehren"
 
-#: divi5-image-mask.php:82
+#: divi5-image-mask.php:83
 msgid "Aspect Ratio"
 msgstr "Seitenverhältnis"
 
-#: divi5-image-mask.php:83
+#: divi5-image-mask.php:84
 msgid "Landscape"
 msgstr "Querformat"
 
-#: divi5-image-mask.php:84
+#: divi5-image-mask.php:85
 msgid "Square"
 msgstr "Quadratisch"
 
-#: divi5-image-mask.php:85
+#: divi5-image-mask.php:86
 msgid "Portrait"
 msgstr "Hochformat"
 
-#: divi5-image-mask.php:86
+#: divi5-image-mask.php:87
 msgid "Size"
 msgstr "Größe"
 
-#: divi5-image-mask.php:87
+#: divi5-image-mask.php:88
 msgid "Stretch to Fill"
 msgstr "Strecken"
 
-#: divi5-image-mask.php:88
+#: divi5-image-mask.php:89
 msgid "Cover"
 msgstr "Füllen"
 
-#: divi5-image-mask.php:89
+#: divi5-image-mask.php:90
 msgid "Fit"
 msgstr "Einpassen"
 
-#: divi5-image-mask.php:90
+#: divi5-image-mask.php:91
 msgid "Custom Size"
 msgstr "Eigene Größe"
 
-#: divi5-image-mask.php:91
+#: divi5-image-mask.php:92
 msgid "Width"
 msgstr "Breite"
 
-#: divi5-image-mask.php:92
+#: divi5-image-mask.php:93
 msgid "Height"
 msgstr "Höhe"
 
-#: divi5-image-mask.php:93
+#: divi5-image-mask.php:94
 msgid "Position"
 msgstr "Position"
 
-#: divi5-image-mask.php:94
+#: divi5-image-mask.php:95
 msgid "Center"
 msgstr "Mitte"
 
-#: divi5-image-mask.php:95
+#: divi5-image-mask.php:96
 msgid "Top Left"
 msgstr "Oben links"
 
-#: divi5-image-mask.php:96
+#: divi5-image-mask.php:97
 msgid "Top"
 msgstr "Oben"
 
-#: divi5-image-mask.php:97
+#: divi5-image-mask.php:98
 msgid "Top Right"
 msgstr "Oben rechts"
 
-#: divi5-image-mask.php:98
+#: divi5-image-mask.php:99
 msgid "Right"
 msgstr "Rechts"
 
-#: divi5-image-mask.php:99
+#: divi5-image-mask.php:100
 msgid "Bottom Right"
 msgstr "Unten rechts"
 
-#: divi5-image-mask.php:100
+#: divi5-image-mask.php:101
 msgid "Bottom"
 msgstr "Unten"
 
-#: divi5-image-mask.php:101
+#: divi5-image-mask.php:102
 msgid "Bottom Left"
 msgstr "Unten links"
 
-#: divi5-image-mask.php:102
+#: divi5-image-mask.php:103
 msgid "Left"
 msgstr "Links"
 
-#: divi5-image-mask.php:103
+#: divi5-image-mask.php:104
 msgid "Horizontal Offset"
 msgstr "Horizontaler Versatz"
 
-#: divi5-image-mask.php:104
+#: divi5-image-mask.php:105
 msgid "Vertical Offset"
 msgstr "Vertikaler Versatz"
 
-#: divi5-image-mask.php:105
+#: divi5-image-mask.php:106
 msgid "Animation"
 msgstr "Animation"
 
-#: divi5-image-mask.php:106
+#: divi5-image-mask.php:107
 msgid ""
 "Zoom In opens the mask from nothing, Zoom Out shrinks it from three times "
 "its size onto the shape, both around its position. Available with Stretch to "
@@ -195,67 +197,67 @@ msgstr ""
 "dreifacher Größe auf die Form zusammen, beide um ihre Position. Verfügbar "
 "bei „Strecken“ und „Eigene Größe“."
 
-#: divi5-image-mask.php:107
+#: divi5-image-mask.php:108
 msgid "None"
 msgstr "Keine"
 
-#: divi5-image-mask.php:108
+#: divi5-image-mask.php:109
 msgid "Zoom In"
 msgstr "Einzoomen"
 
-#: divi5-image-mask.php:109
+#: divi5-image-mask.php:110
 msgid "Zoom Out"
 msgstr "Auszoomen"
 
-#: divi5-image-mask.php:110
+#: divi5-image-mask.php:111
 msgid "Animation Start"
 msgstr "Start der Animation"
 
-#: divi5-image-mask.php:111
+#: divi5-image-mask.php:112
 msgid "On Page Load"
 msgstr "Beim Laden der Seite"
 
-#: divi5-image-mask.php:112
+#: divi5-image-mask.php:113
 msgid "When Scrolled Into View"
 msgstr "Beim Hineinscrollen"
 
-#: divi5-image-mask.php:113
+#: divi5-image-mask.php:114
 msgid "Animation Duration"
 msgstr "Animationsdauer"
 
-#: divi5-image-mask.php:114
+#: divi5-image-mask.php:115
 msgid "Animation Delay"
 msgstr "Animationsverzögerung"
 
-#: divi5-image-mask.php:115
+#: divi5-image-mask.php:116
 msgid "Animation Speed Curve"
 msgstr "Animationskurve"
 
-#: divi5-image-mask.php:116
+#: divi5-image-mask.php:117
 msgid "Ease"
 msgstr "Ease"
 
-#: divi5-image-mask.php:117
+#: divi5-image-mask.php:118
 msgid "Ease-In-Out"
 msgstr "Ease-In-Out"
 
-#: divi5-image-mask.php:118
+#: divi5-image-mask.php:119
 msgid "Ease-In"
 msgstr "Ease-In"
 
-#: divi5-image-mask.php:119
+#: divi5-image-mask.php:120
 msgid "Ease-Out"
 msgstr "Ease-Out"
 
-#: divi5-image-mask.php:120
+#: divi5-image-mask.php:121
 msgid "Linear"
 msgstr "Linear"
 
-#: divi5-image-mask.php:121
+#: divi5-image-mask.php:122
 msgid "Animation Direction"
 msgstr "Richtung der Animation"
 
-#: divi5-image-mask.php:122
+#: divi5-image-mask.php:123
 msgid ""
 "Alternate plays every second run backwards. With an even number of plays the "
 "animation ends where it started."
@@ -263,27 +265,27 @@ msgstr ""
 "„Abwechselnd“ spielt jeden zweiten Durchlauf rückwärts. Bei einer geraden "
 "Anzahl von Durchläufen endet die Animation dort, wo sie begonnen hat."
 
-#: divi5-image-mask.php:123
+#: divi5-image-mask.php:124
 msgid "Normal"
 msgstr "Normal"
 
-#: divi5-image-mask.php:124
+#: divi5-image-mask.php:125
 msgid "Alternate"
 msgstr "Abwechselnd"
 
-#: divi5-image-mask.php:125
+#: divi5-image-mask.php:126
 msgid "Number of Plays"
 msgstr "Anzahl der Durchläufe"
 
-#: divi5-image-mask.php:126
+#: divi5-image-mask.php:127
 msgid "Loop Endlessly"
 msgstr "Endlos wiederholen"
 
-#: divi5-image-mask.php:127
+#: divi5-image-mask.php:128
 msgid "Replay When Scrolled Back Into View"
 msgstr "Beim erneuten Hineinscrollen wiederholen"
 
-#: divi5-image-mask.php:128
+#: divi5-image-mask.php:129
 msgid ""
 "Once the image has left the window completely, the mask returns to its start "
 "and plays again on the way back."

@@ -8,8 +8,8 @@ Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 
 | Field (German)                  | What it does                                                                                                                          |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Mask Shape (Maskenform)         | One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask.                          |
-| Custom Mask (Eigene Maske)      | An SVG or PNG instead of the shape. The image stays visible where the mask is opaque (drawn), and disappears where it is transparent. |
+| Mask Shape (Maskenform)         | One of Divi's mask shapes (the image stays visible where a Divi background would show through the same mask), or **Custom** (Eigene) for an image of your own. |
+| Custom Mask (Eigene Maske)      | Only with Custom: "+ Add Image" picks an SVG or PNG from the media library. The image stays visible where the mask is opaque (drawn), and disappears where it is transparent. Switching back to a shape keeps the uploaded image on hand but unused. |
 | Transform (Transformation)      | Flip horizontally / vertically, rotate by 90°, invert. A custom mask can only be inverted.                                            |
 | Aspect Ratio (Seitenverhältnis) | Landscape, square or portrait version of Divi's shape (like Divi's mask aspect ratio).                                                |
 | Size (Größe)                    | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |

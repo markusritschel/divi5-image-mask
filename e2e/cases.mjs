@@ -33,10 +33,14 @@ export const CASES = [
     mask: { style: 'ellipse', size: 'custom', width: '50%', height: '50%', position: 'top left', horizontalOffset: '200px' },
     shown: [[0.75, 0.25]], hidden: [[0.25, 0.25]],
   },
-  // A custom mask shows the image where it is opaque.
-  { name: 'custom circle', mask: { custom: circle }, shown: [center], hidden: [corner] },
-  { name: 'custom circle inverted', mask: { custom: circle, transform: ['invert'] }, shown: [corner], hidden: [center] },
-  { name: 'custom wins over a style', mask: { style: 'arch', custom: circle }, shown: [center], hidden: [corner, left] },
+  // A custom mask ("Custom" in the shape list) shows the image where it is opaque. Divi's upload field stores the
+  // chosen image as an object; a plain URL is accepted too.
+  { name: 'custom circle', mask: { style: 'custom', custom: { src: circle, id: '1', alt: '' } }, shown: [center], hidden: [corner] },
+  { name: 'custom circle as a URL', mask: { style: 'custom', custom: circle }, shown: [center], hidden: [corner] },
+  { name: 'custom circle inverted', mask: { style: 'custom', custom: { src: circle }, transform: ['invert'] }, shown: [corner], hidden: [center] },
+  // An uploaded image only counts while "Custom" is the shape.
+  { name: 'a shape ignores a stored custom image', mask: { style: 'arch', custom: { src: circle } }, shown: [right], hidden: [left] },
+  { name: 'custom without an image', mask: { style: 'custom' }, shown: [center, corner], hidden: [] },
 ];
 
 /** Asserts that the n-th of `wraps` (.et_pb_image_wrap locators, one per case) is clipped as CASES[n] says. */

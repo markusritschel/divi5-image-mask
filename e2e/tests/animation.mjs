@@ -48,7 +48,7 @@ test('on page load the mask zooms open with its duration, delay and speed curve'
   const { page, url, errors } = await openPage(t, [
     { style: 'ellipse', ...onLoad, animationDuration: '800ms', animationDelay: '100ms', animationEasing: 'linear' },
     { style: 'ellipse' },
-    { custom: circle, transform: ['invert'], ...onLoad },
+    { style: 'custom', custom: { src: circle }, transform: ['invert'], ...onLoad },
     // Cover can't be zoomed (a keyword): no animation.
     { style: 'ellipse', size: 'cover', ...onLoad },
   ]);

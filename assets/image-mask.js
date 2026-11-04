@@ -14,10 +14,18 @@
   const __ = (text) => texts[text] ?? text;
 
   const maskOf = (attrs) => attrs?.image?.advanced?.mask?.desktop?.value ?? {};
-  const customOf = (mask) =>
-    typeof mask.custom === "string" ? mask.custom.trim() : "";
+  // The custom image's URL, only while "Custom" is the shape. Same as d5im_custom_url() in the PHP: Divi's upload
+  // field stores an object ({src, id, alt, …}), a plain URL is accepted too.
+  const customOf = (mask) => {
+    if (mask.style !== "custom") {
+      return "";
+    }
+    const src = typeof mask.custom === "string" ? mask.custom : mask.custom?.src;
+    return typeof src === "string" ? src.trim() : "";
+  };
   const hasMask = (mask) =>
-    customOf(mask) !== "" || !["", "none", undefined].includes(mask.style);
+    customOf(mask) !== "" ||
+    !["", "none", "custom", undefined].includes(mask.style);
   const usesStyle = (mask) => hasMask(mask) && customOf(mask) === "";
   const isPlaced = (mask) =>
     hasMask(mask) && (mask.size ?? "stretch") !== "stretch";
@@ -188,20 +196,76 @@
     invert: { icon: "divi/transform-invert", label: __("Invert") },
   };
 
+  // Mask Shape looks like Divi's mask picker (the same select, with its class and thumbnails) but has our entries:
+  // None, Divi's shapes, and Custom for an uploaded image. Divi's divi/select-mask field takes no extra entry, and
+  // adding "Custom" to Divi's mask library would put it into every background mask picker as well.
+  // The sidebar renders in the top window, with its own React: thumbnails are made with that one.
+  const react = () => window.top?.vendor?.React ?? window.vendor?.React;
+  const thumbnailColor = ({ isHovered, isSelected }) =>
+    isHovered ? "#326BFF" : isSelected ? "white" : "#56668f"; // Divi's.
+  const thumbnail = (label, svg) => (state) => {
+    const { createElement: h, Fragment } = react();
+    return h(
+      Fragment,
+      null,
+      h("span", { className: "label" }, label),
+      h("img", {
+        alt: label,
+        src: `data:image/svg+xml;utf8,${svg(thumbnailColor(state))}`,
+        width: "300",
+        height: "150",
+      }),
+    );
+  };
+  const icon = (paths) => (color) =>
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1440" fill="none" stroke="${color}" stroke-width="70" stroke-linecap="round">${paths}</svg>`,
+    );
+  const noneIcon = icon('<circle cx="960" cy="720" r="300"/><path d="M748 508l424 424"/>');
+  const customIcon = icon(
+    '<rect x="420" y="300" width="1080" height="840" rx="90" stroke-dasharray="140 100"/><path d="M960 540v360M780 720h360"/>',
+  );
+  // Built when the field renders: Divi loads its mask library only after the first render.
+  const shapeOptions = () => {
+    const options = { none: { label: thumbnail(__("None"), noneIcon) } };
+    Object.values(library()?.getMaskStyleOptions?.() ?? {}).forEach(({ name, label }) => {
+      options[name] = {
+        label: thumbnail(label, (color) =>
+          library().getMaskSvg({ style: name, color, size: "stretch", type: "thumbnail" }),
+        ),
+      };
+    });
+    options.custom = { label: thumbnail(__("Custom"), customIcon) };
+    return options;
+  };
+
   const items = {
     style: field(
       "style",
       10,
       __("Mask Shape"),
-      __("One of Divi's mask shapes. The image stays visible where a Divi background would show through the same mask."),
-      { name: "divi/select-mask", props: { hasPreview: false } },
+      __("One of Divi's mask shapes, or Custom for an image of your own. With a Divi shape the image stays visible where a Divi background would show through the same mask."),
+      { name: "divi/select" },
+      undefined,
+      {
+        defaultAttr: { desktop: { value: { style: "none" } } },
+        // Props set here, not in component.props: what filterComponentProps returns replaces those.
+        filterComponentProps: (props) => ({
+          ...props,
+          options: shapeOptions(),
+          className: "et-vb-mask--select", // Divi's grid of thumbnails.
+          displayCheckMark: false,
+          updateMenuPositionOnLoad: true,
+        }),
+      },
     ),
     custom: field(
       "custom",
       20,
       __("Custom Mask"),
-      __("An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque."),
+      __("An SVG or PNG. The image stays visible where the mask is opaque."),
       { name: "divi/upload" },
+      (mask) => mask.style === "custom",
     ),
     transform: field(
       "transform",

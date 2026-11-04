@@ -94,30 +94,57 @@ test('the Image Mask fields store the mask, the preview follows, and the saved p
   assert.deepEqual(errors, []);
 });
 
-test('a custom mask offers only Invert, a shape all four transforms', async (t) => {
+test('Custom in the shape list shows the media picker, and the chosen SVG masks the image', async (t) => {
   if (!diviActive()) return t.skip(SKIP);
   const { id } = php('mask-page', JSON.stringify([{ style: 'arch' }]));
   t.after(() => wp('post', 'delete', id, '--force'));
+  // An SVG in the media library, uploaded as admin (only users with unfiltered_html may upload SVGs).
+  const attachment = wp('media', 'import', '/var/www/html/wp-content/uploads/d5im-circle.svg', '--user=admin', '--porcelain');
+  t.after(() => wp('post', 'delete', attachment, '--force'));
   const { page, app, errors } = await openBuilder(t, id);
   const moduleId = await moduleIdOf(app);
   await openMaskGroup(page, app, moduleId);
+  const stored = () => app.evaluate((id) => window.divi.data.select('divi/edit-post').getModuleAttr(id, 'image.advanced.mask').desktop.value, moduleId);
   const buttons = () => page.locator('.et-vb-field-image-advanced-mask-transform button[data-name]').evaluateAll((all) => all.map((b) => b.dataset.name));
-  const setCustom = (custom) =>
-    app.evaluate(
-      ({ id, custom }) => window.divi.data.dispatch('divi/edit-post').editModuleAttribute({ id, attrName: 'image.advanced.mask', value: { desktop: { value: { style: 'arch', custom } } } }),
-      { id: moduleId, custom },
-    );
-
-  // The aspect ratio belongs to Divi's shapes only. (Divi's field classes are kebab-case.)
+  const picker = page.locator('.et-vb-field-image-advanced-mask-custom');
+  // Divi's field classes are kebab-case.
   const aspectRatio = page.locator('.et-vb-field-image-advanced-mask-aspect-ratio');
+  // Opens the shape list (Divi shows the chosen entry twice while closed) and picks an entry.
+  const chooseShape = async (value) => {
+    await page.locator('.et-vb-field-image-advanced-mask-style li.et-vb-selected-item').first().click();
+    await page.locator(`.et-vb-field-image-advanced-mask-style li[data-value="${value}"]:visible`).first().click();
+  };
+
+  // A shape: no picker, all four transforms, the aspect ratio.
+  assert.equal(await picker.count(), 0);
   assert.deepEqual(await buttons(), ['flipHorizontal', 'flipVertical', 'rotate', 'invert']);
   assert.equal(await aspectRatio.count(), 1);
-  await setCustom(`${BASE}/wp-content/uploads/d5im-circle.svg`);
-  await page.waitForTimeout(500); // Deliberate: the sidebar re-renders after the store change.
+
+  // "Custom" brings the picker; choose the SVG the way an editor does.
+  await chooseShape('custom');
+  await picker.getByText('Add Image').click();
+  const modal = page.locator('.media-modal:visible');
+  await modal.locator('.media-menu-item, .media-router button', { hasText: /Media Library|Mediathek/ }).first().click().catch(() => {});
+  await modal.locator(`li.attachment[data-id="${attachment}"]`).click();
+  // Divi's media window confirms with "Upload an image" (a primary button in the toolbar).
+  await modal.locator('.media-toolbar-primary button.button-primary').first().click();
+  await modal.waitFor({ state: 'hidden', timeout: 5000 });
+
+  const mask = await stored();
+  assert.equal(mask.style, 'custom');
+  assert.match(mask.custom?.src ?? '', /d5im-circle.*\.svg$/);
+  await page.locator('.et-vb-field-image-advanced-mask-transform').waitFor();
   assert.deepEqual(await buttons(), ['invert']);
   assert.equal(await aspectRatio.count(), 0);
-  await setCustom('');
-  await page.waitForTimeout(500);
+  // The preview masks with the chosen circle.
+  await previewRules(app, 1);
+  await page.waitForTimeout(500); // Deliberate: let the preview repaint.
+  const [inside, outside] = await colorsAt(page, app.locator('.et_pb_image_wrap').first(), [[0.5, 0.5], [0.03, 0.03]]);
+  assert.ok(isRed(inside) && !isRed(outside), `preview: ${inside} / ${outside}`);
+
+  // Back to a shape: picker gone, all transforms again.
+  await chooseShape('ellipse');
+  await picker.waitFor({ state: 'detached', timeout: 5000 });
   assert.deepEqual(await buttons(), ['flipHorizontal', 'flipVertical', 'rotate', 'invert']);
   assert.deepEqual(errors, []);
 });
@@ -199,7 +226,8 @@ test('on a German site the mask group is German', async (t) => {
   assert.deepEqual(
     labels.map((label) => label.trim().toLowerCase()),
     [
-      'Maskenform', 'Eigene Maske', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz',
+      // No "Eigene Maske": the picker only shows with the shape "Eigene".
+      'Maskenform', 'Transformation', 'Seitenverhältnis', 'Größe', 'Breite', 'Höhe', 'Position', 'Horizontaler Versatz', 'Vertikaler Versatz',
       'Animation', 'Start der Animation', 'Animationsdauer', 'Animationsverzögerung', 'Animationskurve',
       'Richtung der Animation', 'Anzahl der Durchläufe', 'Endlos wiederholen',
     ].map((label) => label.toLowerCase()),

@@ -71,9 +71,10 @@ function d5im_builder_texts(): array {
 	return array(
 		'Image Mask'        => __( 'Image Mask', 'divi5-image-mask' ),
 		'Mask Shape'        => __( 'Mask Shape', 'divi5-image-mask' ),
-		'One of Divi\'s mask shapes. The image stays visible where a Divi background would show through the same mask.' => __( 'One of Divi\'s mask shapes. The image stays visible where a Divi background would show through the same mask.', 'divi5-image-mask' ),
+		'One of Divi\'s mask shapes, or Custom for an image of your own. With a Divi shape the image stays visible where a Divi background would show through the same mask.' => __( 'One of Divi\'s mask shapes, or Custom for an image of your own. With a Divi shape the image stays visible where a Divi background would show through the same mask.', 'divi5-image-mask' ),
+		'Custom'            => __( 'Custom', 'divi5-image-mask' ),
 		'Custom Mask'       => __( 'Custom Mask', 'divi5-image-mask' ),
-		'An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque.' => __( 'An SVG or PNG instead of the mask shape. The image stays visible where the mask is opaque.', 'divi5-image-mask' ),
+		'An SVG or PNG. The image stays visible where the mask is opaque.' => __( 'An SVG or PNG. The image stays visible where the mask is opaque.', 'divi5-image-mask' ),
 		'Transform'         => __( 'Transform', 'divi5-image-mask' ),
 		'Flip Horizontal'   => __( 'Flip Horizontal', 'divi5-image-mask' ),
 		'Flip Vertical'     => __( 'Flip Vertical', 'divi5-image-mask' ),
@@ -167,11 +168,28 @@ function d5im_length( $value, string $fallback ): string {
 }
 
 /**
+ * The URL of the mask's custom image, or '' unless "Custom" is the chosen shape and an image is set.
+ *
+ * Divi's upload field stores the chosen image as an object ({src, id, alt, …}); a plain URL is accepted as well.
+ * Same as customOf() in assets/image-mask.js.
+ *
+ * @param array $mask The module's image.advanced.mask value.
+ */
+function d5im_custom_url( array $mask ): string {
+	if ( 'custom' !== ( $mask['style'] ?? '' ) ) {
+		return '';
+	}
+	$custom = $mask['custom'] ?? '';
+	return esc_url_raw( trim( (string) ( is_array( $custom ) ? ( $custom['src'] ?? '' ) : $custom ) ) );
+}
+
+/**
  * The CSS declarations that clip an Image module's .et_pb_image_wrap to its mask ('' without a mask).
  *
  * Same output as maskCss() in assets/image-mask.js, which renders the builder preview. A Divi style uses its
  * "inverted" SVG, so the image shows where a Divi background shows through that mask; the Invert transform takes
- * the regular one. A custom mask (an image URL) shows the image where it is opaque; it can only be inverted.
+ * the regular one. A custom mask (style "custom" plus an image) shows the image where it is opaque; it can only be
+ * inverted.
  *
  * @param array $mask The module's image.advanced.mask value: style, custom, transform, aspectRatio, size, width,
  *                    height, position, horizontalOffset, verticalOffset.
@@ -179,14 +197,14 @@ function d5im_length( $value, string $fallback ): string {
 function d5im_mask_css( array $mask ): string {
 	$transform = is_array( $mask['transform'] ?? null ) ? $mask['transform'] : array();
 	$invert    = in_array( 'invert', $transform, true );
-	$custom    = esc_url_raw( trim( (string) ( $mask['custom'] ?? '' ) ) );
+	$custom    = d5im_custom_url( $mask );
 	$style     = (string) ( $mask['style'] ?? '' );
 	$size      = (string) ( $mask['size'] ?? 'stretch' );
 	$layers    = array();
 
 	if ( '' !== $custom ) {
 		$layers[] = 'url("' . $custom . '")';
-	} elseif ( '' !== $style && 'none' !== $style && class_exists( '\ET\Builder\Packages\MaskAndPatternLibrary\Utils\MaskAndPatternUtils' ) ) {
+	} elseif ( ! in_array( $style, array( '', 'none', 'custom' ), true ) && class_exists( '\ET\Builder\Packages\MaskAndPatternLibrary\Utils\MaskAndPatternUtils' ) ) {
 		$utils = '\ET\Builder\Packages\MaskAndPatternLibrary\Utils\MaskAndPatternUtils';
 		$type  = in_array( $mask['aspectRatio'] ?? '', array( 'portrait', 'square' ), true ) ? $mask['aspectRatio'] : 'landscape';
 		$svg   = $utils::get_mask_svg(
@@ -249,7 +267,7 @@ function d5im_mask_sizes( array $mask ): array {
 		$sizes = array( in_array( $size, array( 'cover', 'contain' ), true ) ? $size : '100% 100%' );
 	}
 	$transform = is_array( $mask['transform'] ?? null ) ? $mask['transform'] : array();
-	if ( '' !== trim( (string) ( $mask['custom'] ?? '' ) ) && in_array( 'invert', $transform, true ) ) {
+	if ( '' !== d5im_custom_url( $mask ) && in_array( 'invert', $transform, true ) ) {
 		$sizes[] = '100% 100%';
 	}
 	return $sizes;
