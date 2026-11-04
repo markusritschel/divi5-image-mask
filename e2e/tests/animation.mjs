@@ -133,6 +133,8 @@ test('Plays, Loop Endlessly and Direction set how often and which way the zoom r
     { style: 'ellipse', ...onLoad, animationPlays: '25' },
     // Replay needs the view start: with the load start it has no effect.
     { style: 'ellipse', ...onLoad, animationReplay: 'on' },
+    // Duration and delay in seconds, as the unit picker allows.
+    { style: 'ellipse', ...onLoad, animationDuration: '1.5s', animationDelay: '0.2s' },
   ]);
   const play = (i) => playOf(wraps(page).nth(i));
   assert.deepEqual(await play(0), { iterations: Infinity, direction: 'normal', state: 'running' });
@@ -141,6 +143,8 @@ test('Plays, Loop Endlessly and Direction set how often and which way the zoom r
   assert.equal((await play(3)).iterations, Infinity);
   assert.equal((await play(4)).iterations, 10);
   assert.equal(await wraps(page).nth(5).evaluate((el) => el.classList.contains('d5im-repeat-view')), false);
+  const [seconds] = await animationsOf(wraps(page).nth(6));
+  assert.deepEqual([seconds.duration, seconds.delay], [1500, 200]);
   assert.deepEqual(errors, []);
 });
 

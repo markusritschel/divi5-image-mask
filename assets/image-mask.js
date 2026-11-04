@@ -460,7 +460,9 @@
       130,
       __("Animation Duration"),
       "",
-      { name: "divi/range", props: { defaultUnit: "ms", min: 0, minLimit: 0, max: 2000, step: 50 } },
+      // A CSS time property: Divi then shows an input with a unit picker (s / ms) instead of a slider, like its
+      // Transitions fields (cssProperty "transition-duration").
+      { name: "divi/range", props: { cssProperty: "animation-duration", defaultUnit: "ms", min: 0, minLimit: 0 } },
       isAnimated,
       { defaultAttr: { desktop: { value: { animationDuration: "500ms" } } } },
     ),
@@ -469,7 +471,7 @@
       140,
       __("Animation Delay"),
       "",
-      { name: "divi/range", props: { defaultUnit: "ms", min: 0, minLimit: 0, max: 2000, step: 50 } },
+      { name: "divi/range", props: { cssProperty: "animation-delay", defaultUnit: "ms", min: 0, minLimit: 0 } },
       isAnimated,
       { defaultAttr: { desktop: { value: { animationDelay: "0ms" } } } },
     ),

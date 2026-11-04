@@ -203,6 +203,21 @@ test('the animation fields show for zoomable sizes, and the preview replays the 
     await app.evaluate((id) => window.divi.data.select('divi/edit-post').getModuleAttr(id, 'image.advanced.mask').desktop.value.animationPlays, moduleId),
     '3',
   );
+
+  // Duration and Delay are inputs with a unit picker (s / ms) like Divi's Transitions, without a slider.
+  for (const subName of ['animationDuration', 'animationDelay']) {
+    assert.equal(await field(subName).locator('input[type="range"]').count(), 0, `${subName}: slider`);
+    assert.equal(await field(subName).locator('button.et-vb-numeric-input-value-unit').count(), 1, `${subName}: unit picker`);
+  }
+  // Seconds, typed into the field: stored as typed, played for 1500 ms.
+  const durationInput = field('animationDuration').locator('input[type="text"]').first();
+  await durationInput.fill('1.5s');
+  await durationInput.press('Enter');
+  await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.effect.getTiming().duration === 1500);
+  assert.equal(
+    await app.evaluate((id) => window.divi.data.select('divi/edit-post').getModuleAttr(id, 'image.advanced.mask').desktop.value.animationDuration, moduleId),
+    '1.5s',
+  );
   await previewIs(() => document.querySelector('.et_pb_image_wrap').getAnimations()[0]?.animationName === 'd5im-zoom');
 
   // Let it run past where a replay would be, change the duration: it starts again with the new duration.
