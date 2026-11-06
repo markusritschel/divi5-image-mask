@@ -8,6 +8,7 @@ WordPress plugin (`divi5-image-mask`, prefix `d5im_`, text domain `divi5-image-m
 # Test site (Docker, http://localhost:8094, admin/admin, author/author): WordPress + German core files + this plugin + Divi 5
 e2e/setup.sh ~/Projekte/webdesign/Divi/Divi.zip      # Divi is licensed: it goes into the Docker volume, never the repo
 cd e2e && pnpm install && CHROMIUM_PATH=/usr/bin/chromium pnpm test   # ~100 s; the Divi tests skip without Divi
+cd e2e && CHROMIUM_PATH=/usr/bin/chromium node capture.mjs   # README images -> docs/screenshots/ (~1 min)
 docker compose -f e2e/docker-compose.yml down -v     # throw the test site away
 ```
 
