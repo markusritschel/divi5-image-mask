@@ -9,6 +9,11 @@
 
 Small WordPress plugin that adds an **Image Mask** group to the Divi 5 Image module: cut the image into one of Divi's mask shapes (the same ones as **Background > Mask**) or into a mask you upload yourself.
 
+<p align="center">
+  <img src="docs/screenshots/mask-shape-list.png" width="247" alt="The opened Mask Shape list in the Builder sidebar: None, Divi's 23 mask shapes as previews (honeycomb selected), and + for a mask of your own" /><br>
+  <sub>The Mask Shape list: Divi's mask shapes, and + for your own.</sub>
+</p>
+
 ## Use in Divi
 
 Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
@@ -22,6 +27,12 @@ Open an Image module, **Design > Image Mask** (German: **Bildmaske**):
 | Size (Größe)                    | Stretch (default), cover, fit, or a custom width/height; with anything but stretch also a position and offsets.                       |
 | Outside Opacity (Deckkraft außerhalb) | How much of the image shows outside the shape: 0 % (default) hides it, e.g. 20 % leaves it faintly visible, a spotlight effect. With an inverted custom mask it applies to the hole. In an animation only the shape zooms; the faint rest stays. |
 | Animation                       | Zoom In (Einzoomen): the mask grows from nothing to its size. Zoom Out (Auszoomen): it shrinks from three times its size onto the shape. Both around the mask's position, while the image stays still. With Stretch or a custom size. |
+
+<p align="center">
+  <img src="docs/screenshots/builder-mask.png" width="280" align="top" alt="Builder sidebar, Design > Image Mask: Mask Shape select (Honeycomb), Transform buttons, Aspect Ratio tiles, Size, Outside Opacity" />
+  &nbsp;
+  <img src="docs/screenshots/builder-mask-animation.png" width="280" align="top" alt="The animation fields of the same group: Animation (Zoom In), Animation Start, Duration, Delay, Speed Curve, Direction, Loop Endlessly, Replay When Scrolled Back Into View" />
+</p>
 
 **Animation** settings, once Zoom In or Zoom Out is chosen:
 
